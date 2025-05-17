@@ -29,3 +29,29 @@ Notes:
 
 - Scripts are organized by domain (e.g., Azure AD, On-Prem AD).
 - Contributions and suggestions are welcome!
+
+**get_az_token.ps1**
+**What a Successful Token Response Implies**
+
+If you get a token back:
+
+The app **does not require MFA** (since ROPC cannot satisfy MFA).
+
+The user is **allowed to authenticate with just username and password**.
+
+The app is **not blocked by Conditional Access** or **federation restrictions**.
+ 
+
+In other words, if anything other than 400 (Bad Request) is returned it may indicate a problem.
+
+To make it easier to spot I made the output of a successful token obtainment in RED.
+
+Under https://intune.microsoft.com/ under the User's Sign-in logs (the user you specifid in the script) you can see the errors when MFA is expected but not used:
+
+**Sign-in error** code `50076` in Azure AD **indicates that MFA (Multi-Factor Authentication) is required**.
+
+![Notice the PowerShell user agent](Azure Active Directory/docs/image-20250514-202526.png)
+
+
+![Notice the MFA requirement](Azure Active Directory/docs/image-20250514-202748.png)
+
