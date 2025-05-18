@@ -50,8 +50,9 @@ Under https://intune.microsoft.com/ under the User's Sign-in logs (the user you 
 
 **Sign-in error** code `50076` in Azure AD **indicates that MFA (Multi-Factor Authentication) is required**.
 
-![Notice the PowerShell user agent](Azure Active Directory/docs/image-20250514-202526.png)
+![Notice the PowerShell user agent](Azure%20Active%20Directory/docs/image-20250514-202526.png)
 
 
-![Notice the MFA requirement](Azure Active Directory/docs/image-20250514-202748.png)
+![Notice the MFA requirement](Azure%20Active%20Directory/docs/image-20250514-202748.png)
+
 
