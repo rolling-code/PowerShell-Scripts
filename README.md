@@ -30,7 +30,9 @@ Notes:
 - Scripts are organized by domain (e.g., Azure AD, On-Prem AD).
 - Contributions and suggestions are welcome!
 
+---
 **get_az_token.ps1**
+
 **What a Successful Token Response Implies**
 
 If you get a token back:
@@ -50,9 +52,10 @@ Under https://intune.microsoft.com/ under the User's Sign-in logs (the user you 
 
 **Sign-in error** code `50076` in Azure AD **indicates that MFA (Multi-Factor Authentication) is required**.
 
+Notice the PowerShell user agent given we are using API calls from PS
 ![Notice the PowerShell user agent](Azure%20Active%20Directory/docs/image-20250514-202526.png)
 
-
+Notice the MFA requirement error description, as expected.
 ![Notice the MFA requirement](Azure%20Active%20Directory/docs/image-20250514-202748.png)
 
 
