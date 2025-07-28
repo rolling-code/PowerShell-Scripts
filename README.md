@@ -9,6 +9,7 @@ Folder Structure:
 PowerShell-Scripts/
 ├── Azure Active Directory/
 │   └── get_az_token.ps1
+│   └── aadinternals_audit6.ps1
 ├── On-Prem Active Directory/
 │   └── .placeholder
 └── README.md
