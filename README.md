@@ -58,4 +58,16 @@ Notice the PowerShell user agent given we are using API calls from PS
 Notice the MFA requirement error description, as expected.
 ![Notice the MFA requirement](Azure%20Active%20Directory/docs/image-20250514-202748.png)
 
+---
+**aadinternals_audit6.ps1**
 
+Uses AADinternals to run Eight security checks on the tenant.
+
+1) Global Admins (≤ 5)
+2) Conditional Access – MFA for All Users
+3) Security Defaults Disabled
+4) MFA Status
+5) Access Package Catalogs Present
+6) Service Principals Without Roles
+7) Tenant Settings – DirSync & SSPR
+8) Block Legacy Authentication
