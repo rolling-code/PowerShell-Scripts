@@ -72,3 +72,23 @@ Uses AADinternals to run Eight security checks on the tenant.
 6) Service Principals Without Roles
 7) Tenant Settings – DirSync & SSPR
 8) Block Legacy Authentication
+
+---
+**ad_object_permissions3.ps1**
+
+Audits Active Directory permissions for a given user and all the groups they belong to, within a specified LDAP container. It reports every Access Control Entry (ACE) that grants the user or their groups any rights on objects under the search base.
+
+Use like so:
+.\ad_object_permissions3.ps1 -Username "XXX\mcontestabile" -Domain "DC=YYYYYY,DC=net"
+
+Each row in the output indicates a single permission grant:
+- ObjectDN
+The exact AD container or object that holds the ACE.
+- Principal
+Either the user account or one of their groups.
+- Rights
+The bitwise rights 
+
+Keep an eye out for anything that shows 
+ GenericAll or FullControl (Grants the user or group unrestricted rights over objects in sensitive OUs)
+ WriteProperty or DeleteChild (Rights that allow modifying critical attributes (password resets, group membership) or removing child objects (users, computers))
