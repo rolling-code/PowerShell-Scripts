@@ -124,6 +124,7 @@ Audits Group Policy Object (GPO) permissions across your Active Directory domain
 **get_policies.ps1**
 
 Determines which Azure AD Conditional Access (CA) policies apply to a specific user, evaluating both direct user inclusion/exclusion and group or role–based assignments.
+
 Use like so:
 `.\get_policies.ps1 userPrincipalname@domain.net`
 
@@ -139,5 +140,6 @@ Lists members of the local Administrators group on the machine where the script 
 **check_blank_password_users.ps1**
 
 Tests AD accounts for blank or username-equal passwords and reports results.
+
 Use like so:
 `.\check_blank_password_users.ps1 -DomainFqdn domain.net`
