@@ -123,4 +123,6 @@ Audits Group Policy Object (GPO) permissions across your Active Directory domain
 
 Determines which Azure AD Conditional Access (CA) policies apply to a specific user, evaluating both direct user inclusion/exclusion and group or role–based assignments.
 NOTE: Microsoft Graph Command Line Tools must be granted.
-If not you will be prompted like so ![Not enough permissions](Azure%20Active%20Directory/docs/Screenshot 2025-07-30 135129.png)
+If not you will be prompted like so ![Not enough permissions](Azure%20Active%20Directory/docs/Screenshot%202025-07-30%20135129.png)
+
+
