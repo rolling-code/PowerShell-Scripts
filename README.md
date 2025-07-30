@@ -14,6 +14,7 @@ PowerShell-Scripts/
 │   └── ad_object_permissions3.ps1
 │   └── delegated_rights.ps1
 │   └── servers_get_smb.ps1
+│   └── gpo_delegation_check2.ps1
 └── README.md
 ```
 
@@ -107,3 +108,11 @@ Use like so:
 **servers_get_smb.ps1**
 
 Discovers every domain-joined Windows Server via Active Directory, then remotely enumerates each server’s SMB shares and their share-level permissions.
+
+---
+**gpo_delegation_check2.ps1**
+
+Audits Group Policy Object (GPO) permissions across your Active Directory domain, focusing on the key delegation levels you care about: read, edit, and full‐control.
+- If you see a trustee listed under GpoAll, they can fully manage that GPO—critically important for change control.
+- GpoEdit entries indicate who can modify policy settings.
+- GpoRead entries tell you who can view but not alter a GPO.
