@@ -83,7 +83,7 @@ Uses AADinternals to run Eight security checks on the tenant.
 Audits Active Directory permissions for a given user and all the groups they belong to, within a specified LDAP container. It reports every Access Control Entry (ACE) that grants the user or their groups any rights on objects under the search base.
 
 Use like so:
-.\ad_object_permissions3.ps1 -Username "XXX\mcontestabile" -Domain "DC=YYYYYY,DC=net"
+`.\ad_object_permissions3.ps1 -Username "XXX\mcontestabile" -Domain "DC=YYYYYY,DC=net"`
 
 Each row in the output indicates a single permission grant:
 - ObjectDN
@@ -103,7 +103,7 @@ Keep an eye out for anything that shows
 Audits explicit ACLs for a single account under a given AD container. It dumps every Access Control Entry (ACE) on objects beneath your search base where the ACE’s IdentityReference exactly matches the provided username.
 
 Use like so:
-.\delegated_rights.ps1 -Username "XXX\mcontestabile" -Domain "DC=YYYYYY,DC=net"
+`.\delegated_rights.ps1 -Username "XXX\mcontestabile" -Domain "DC=YYYYYY,DC=net"`
 
 ---
 **servers_get_smb.ps1**
@@ -123,7 +123,7 @@ Audits Group Policy Object (GPO) permissions across your Active Directory domain
 
 Determines which Azure AD Conditional Access (CA) policies apply to a specific user, evaluating both direct user inclusion/exclusion and group or role–based assignments.
 Use like so:
-.\get_policies.ps1 `userPrincipalname@domain.net`
+`.\get_policies.ps1 userPrincipalname@domain.net`
 
 NOTE: Microsoft Graph Command Line Tools must be granted.
 If not you will be prompted like so ![Not enough permissions](Azure%20Active%20Directory/docs/Screenshot%202025-07-30%20135129.png)
