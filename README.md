@@ -10,6 +10,7 @@ PowerShell-Scripts/
 ├── Azure Active Directory/
 │   └── get_az_token.ps1
 │   └── aadinternals_audit6.ps1
+│   └── get_policies.ps1
 ├── On-Prem Active Directory/
 │   └── ad_object_permissions3.ps1
 │   └── delegated_rights.ps1
@@ -116,3 +117,10 @@ Audits Group Policy Object (GPO) permissions across your Active Directory domain
 - If you see a trustee listed under GpoAll, they can fully manage that GPO—critically important for change control.
 - GpoEdit entries indicate who can modify policy settings.
 - GpoRead entries tell you who can view but not alter a GPO.
+
+---
+**get_policies.ps1**
+
+Determines which Azure AD Conditional Access (CA) policies apply to a specific user, evaluating both direct user inclusion/exclusion and group or role–based assignments.
+NOTE: Microsoft Graph Command Line Tools must be granted.
+If not you will be prompted like so ![Not enough permissions](Azure%20Active%20Directory/docs/Screenshot 2025-07-30 135129.png)
