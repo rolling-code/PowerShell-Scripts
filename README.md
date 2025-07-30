@@ -17,6 +17,7 @@ PowerShell-Scripts/
 │   └── servers_get_smb.ps1
 │   └── gpo_delegation_check2.ps1
 │   └── whois_islocal_admin2.ps1
+│   └── check_blank_password_users.ps1
 └── README.md
 ```
 
@@ -133,3 +134,10 @@ If not you will be prompted like so ![Not enough permissions](Azure%20Active%20D
 **whois_islocal_admin2.ps1**
 
 Lists members of the local Administrators group on the machine where the script runs.
+
+---
+**check_blank_password_users.ps1**
+
+Tests AD accounts for blank or username-equal passwords and reports results.
+Use like so:
+`.\check_blank_password_users.ps1 -DomainFqdn domain.net`
