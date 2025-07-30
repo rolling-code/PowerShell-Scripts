@@ -16,6 +16,7 @@ PowerShell-Scripts/
 │   └── delegated_rights.ps1
 │   └── servers_get_smb.ps1
 │   └── gpo_delegation_check2.ps1
+│   └── whois_islocal_admin2.ps1
 └── README.md
 ```
 
@@ -128,4 +129,7 @@ Use like so:
 NOTE: Microsoft Graph Command Line Tools must be granted.
 If not you will be prompted like so ![Not enough permissions](Azure%20Active%20Directory/docs/Screenshot%202025-07-30%20135129.png)
 
+---
+**whois_islocal_admin2.ps1**
 
+Lists members of the local Administrators group on the machine where the script runs.
