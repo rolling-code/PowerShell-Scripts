@@ -12,6 +12,7 @@ PowerShell-Scripts/
 │   └── aadinternals_audit6.ps1
 ├── On-Prem Active Directory/
 │   └── ad_object_permissions3.ps1
+│   └── delegated_rights.ps1
 └── README.md
 ```
 
@@ -92,3 +93,11 @@ The bitwise rights
 Keep an eye out for anything that shows 
  GenericAll or FullControl (Grants the user or group unrestricted rights over objects in sensitive OUs)
  WriteProperty or DeleteChild (Rights that allow modifying critical attributes (password resets, group membership) or removing child objects (users, computers))
+
+---
+**delegated_rights.ps1**
+
+Audits explicit ACLs for a single account under a given AD container. It dumps every Access Control Entry (ACE) on objects beneath your search base where the ACE’s IdentityReference exactly matches the provided username.
+
+Use like so:
+.\delegated_rights.ps1 -Username "XXX\mcontestabile" -Domain "DC=YYYYYY,DC=net"
