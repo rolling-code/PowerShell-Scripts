@@ -13,6 +13,7 @@ PowerShell-Scripts/
 ├── On-Prem Active Directory/
 │   └── ad_object_permissions3.ps1
 │   └── delegated_rights.ps1
+│   └── servers_get_smb.ps1
 └── README.md
 ```
 
@@ -101,3 +102,8 @@ Audits explicit ACLs for a single account under a given AD container. It dumps e
 
 Use like so:
 .\delegated_rights.ps1 -Username "XXX\mcontestabile" -Domain "DC=YYYYYY,DC=net"
+
+---
+**servers_get_smb.ps1**
+
+Discovers every domain-joined Windows Server via Active Directory, then remotely enumerates each server’s SMB shares and their share-level permissions.
