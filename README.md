@@ -20,6 +20,7 @@ PowerShell-Scripts/
 │   └── check_blank_password_users.ps1
 │   └── check_PSSession_blank_passwords2.ps1
 │   └── check_smb_settings_all_domain_joined_pc_using_ps_remoting.ps1
+│   └── check_smb_settings_all_domain_joined_pc_using_wmi_and_remote_registry.ps1
 └── README.md
 ```
 
@@ -156,3 +157,7 @@ Tests whether AD accounts can open a PSSession with a blank password. A PSSessio
 
 For each domain joined computer, use WinRM to check SMB settings. 
 
+---
+**check_smb_settings_all_domain_joined_pc_using_wmi_and_remote_registry.ps1**
+
+For each domain joined computer, use WMI to check SMB settings.
