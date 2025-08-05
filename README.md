@@ -19,6 +19,7 @@ PowerShell-Scripts/
 │   └── whois_islocal_admin2.ps1
 │   └── check_blank_password_users.ps1
 │   └── check_PSSession_blank_passwords2.ps1
+│   └── check_smb_settings_all_domain_joined_pc_using_ps_remoting.ps1
 └── README.md
 ```
 
@@ -149,6 +150,11 @@ Use like so:
 **check_PSSession_blank_passwords2.ps1**
 
 Tests whether AD accounts can open a PSSession with a blank password. A PSSession is a persistent, interactive PowerShell connection to a remote computer. It’s conceptually similar to a remote desktop session in that you have a “window” into the target machine—but it’s strictly text-based. You get a live PowerShell prompt on the remote host, not its full GUI desktop.
+
+---
+**check_smb_settings_all_domain_joined_pc_using_ps_remoting.ps1**
+
+For each domain joined computer, use WinRM to check SMB settings. 
 
 Use like so:
 `.\check_PSSession_blank_passwords2.ps1 -DomainFqdn domain.net -Users "furby","doohdah"`
