@@ -7,6 +7,8 @@ Folder Structure:
 
 ```
 PowerShell-Scripts/
+├── generic/
+│   └── Base64Tool.ps1
 ├── Azure Active Directory/
 │   └── get_az_token.ps1
 │   └── aadinternals_audit6.ps1
@@ -161,3 +163,11 @@ For each domain joined computer, use WinRM to check SMB settings.
 **check_smb_settings_all_domain_joined_pc_using_wmi_and_remote_registry.ps1**
 
 For each domain joined computer, use WMI to check SMB settings.
+
+---
+**Base64Tool.ps1**
+
+Use like so:
+
+`.\Base64Tool.ps1 -InputString 'SGVsbG8gV29ybGQh'`  (Equivalent to `[Text.Encoding]::Unicode.GetString([Convert]::FromBase64String('SABlAGwAbABvACAAVwBvAHIAbABkACEA'))`)
+`.\Base64Tool.ps1 -InputString 'Hello World!' -Encode` (Equivalent to `[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes('Hello World!'))`)
