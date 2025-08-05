@@ -156,5 +156,3 @@ Tests whether AD accounts can open a PSSession with a blank password. A PSSessio
 
 For each domain joined computer, use WinRM to check SMB settings. 
 
-Use like so:
-`.\check_PSSession_blank_passwords2.ps1 -DomainFqdn domain.net -Users "furby","doohdah"`
