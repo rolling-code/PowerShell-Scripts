@@ -170,8 +170,10 @@ For each domain joined computer, use WMI to check SMB settings.
 Use like so:
 
 `.\Base64Tool.ps1 -InputString 'SGVsbG8gV29ybGQh'`  
+
 (Equivalent to `[Text.Encoding]::Unicode.GetString([Convert]::FromBase64String('SABlAGwAbABvACAAVwBvAHIAbABkACEA'))`)
 
 `.\Base64Tool.ps1 -InputString 'Hello World!' -Encode` 
+
 (Equivalent to `[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes('Hello World!'))`)
 
