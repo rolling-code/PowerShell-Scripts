@@ -23,6 +23,7 @@ PowerShell-Scripts/
 │   └── check_PSSession_blank_passwords2.ps1
 │   └── check_smb_settings_all_domain_joined_pc_using_ps_remoting.ps1
 │   └── check_smb_settings_all_domain_joined_pc_using_wmi_and_remote_registry.ps1
+│   └── inactive_users.ps1
 └── README.md
 ```
 
@@ -177,3 +178,10 @@ Use like so:
 
 (Equivalent to `[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes('Hello World!'))`)
 
+---
+**inactive_users.ps1**
+
+Finds enabled Active Directory users inactive for a specified number of days (default: 180), excluding the built-in Administrator account.
+
+Use like so:
+`.\inactive_users.ps1`
