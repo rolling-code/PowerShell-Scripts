@@ -27,6 +27,7 @@ PowerShell-Scripts/
 │   └── inactive_users.ps1
 │   └── is_ldap_signing_enabled.ps1
 │   └── replicate_permissions.ps1
+│   └── replicated_rights2.ps1
 └── README.md
 ```
 
@@ -211,10 +212,23 @@ An illicit consent grant attack abuses this exact flow. An attacker automates th
 ---
 **replicate_permissions.ps1**
 
-audits permissions on an Active Directory user object.
+Audits permissions on an Active Directory user object.
 - Accepts a SamAccountName as a parameter.
 - Looks up the user’s DistinguishedName in AD.
 - Retrieves the object’s Access Control List (ACL).
 - Filters ACL entries to find where that same user (AIM\<UserSamAccountName>) has ExtendedRight privileges.
 - Outputs a table showing who holds the right, what object type it applies to, the kind of rights, and whether it’s Allow or Deny.
 Use this to verify special delegation or extended rights granted to a user against their own AD object.
+
+---
+**replicated_rights2.ps1**
+
+Scans Active Directory objects under a specified subtree and reports any entries that grant a particular user elevated permissions.
+Identifies which AD objects include access control entries (ACEs) granting the target account any of the following rights:
+- GenericAll
+- WriteProperty
+- ExtendedRight
+
+
+Use like so:
+`.\replicated_rights2.ps1 -UserAccountName 'XXX\krbtgt' -SearchBase 'DC=xxx,DC=yyy' -Verbose`
