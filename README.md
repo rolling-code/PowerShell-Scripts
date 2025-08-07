@@ -28,6 +28,7 @@ PowerShell-Scripts/
 │   └── is_ldap_signing_enabled.ps1
 │   └── replicate_permissions.ps1
 │   └── replicated_rights2.ps1
+│   └── setNoPreauth.ps1
 └── README.md
 ```
 
@@ -232,3 +233,11 @@ Identifies which AD objects include access control entries (ACEs) granting the t
 
 Use like so:
 `.\replicated_rights2.ps1 -UserAccountName 'XXX\krbtgt' -SearchBase 'DC=xxx,DC=yyy' -Verbose`
+
+---
+**setNoPreauth.ps1**
+
+Provides a controlled way to disable Kerberos pre-authentication for an Active Directory user by flipping a single bit in their userAccountControl attribute. It also gives you clear visibility into which flags are set on that user object both before and after the change. Modifying the userAccountControl attribute in Active Directory isn’t something a standard domain user can do by default. You'll get "Exception calling "SetInfo" with "0" argument(s): "Access is denied."
+
+Use like so:
+`.\setNoPreauth.ps1 "LDAP://CN=Mario Contestabile,OU=blahblah,OU=bloop,DC=xxx,DC=yyy"`
