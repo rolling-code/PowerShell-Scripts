@@ -13,6 +13,7 @@ PowerShell-Scripts/
 │   └── get_az_token.ps1
 │   └── aadinternals_audit6.ps1
 │   └── get_policies.ps1
+│   └── grant_consent_MSGraph.ps1
 ├── On-Prem Active Directory/
 │   └── ad_object_permissions3.ps1
 │   └── delegated_rights.ps1
@@ -195,5 +196,13 @@ LdapServer: xxx.yyy.net
 UserUPN: mcontestabile@yyy.net
 Password: *************
 
+---
+**grant_consent_MSGraph.ps1**
 
+The provided script automates a delegated‐consent grant of Microsoft Graph permissions to a user on behalf of an application. In essence, it:
+- Connects to Microsoft Graph with elevated scopes.
+- Ensures a service principal exists for the client app (Graph Explorer).
+- Creates an OAuth2 delegated permission grant for that app to call Microsoft Graph APIs as the specified user.
+- Assigns the app to the user so it’s visible in their My Apps portal.
 
+An illicit consent grant attack abuses this exact flow. An attacker automates the creation of a malicious app, tricks a user into granting it high-risk scopes, and then uses those tokens to exfiltrate data—bypassing credentials and MFA entirely. By scripting consent grants at scale, adversaries can stealthily establish persistent backdoors.
