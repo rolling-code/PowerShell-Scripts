@@ -24,6 +24,7 @@ PowerShell-Scripts/
 │   └── check_smb_settings_all_domain_joined_pc_using_ps_remoting.ps1
 │   └── check_smb_settings_all_domain_joined_pc_using_wmi_and_remote_registry.ps1
 │   └── inactive_users.ps1
+│   └── is_ldap_signing_enabled.ps1
 └── README.md
 ```
 
@@ -185,3 +186,14 @@ Finds enabled Active Directory users inactive for a specified number of days (de
 
 Use like so:
 `.\inactive_users.ps1`
+
+---
+**is_ldap_signing_enabled.ps1** (Requires PS version 7)
+
+Supply values for the following parameters:
+LdapServer: xxx.yyy.net
+UserUPN: mcontestabile@yyy.net
+Password: *************
+
+
+
