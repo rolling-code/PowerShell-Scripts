@@ -12,7 +12,7 @@ $permissions = @("openid", "profile", "offline_access", "User.Read", "User.ReadB
 
 # The user on behalf of whom access will be granted. The app will be able to access 
 # the API on behalf of this user.
-$userUpnOrId = "mcontestabile@aimfire.net"
+$userUpnOrId = "mcontestabile@xxx.yyy"
 
 # Step 0. Connect to Microsoft Graph PowerShell. We need User.ReadBasic.All to get
 #    users' IDs, Application.ReadWrite.All to list and create service principals, 
@@ -46,4 +46,5 @@ if ($clientSp.AppRoles | ? { $_.AllowedMemberTypes -contains "User" }) {
     # indicating that the app is assigned to the user, but not for any specific 
     # app role.
     $assignment = New-MgServicePrincipalAppRoleAssignedTo -ServicePrincipalId $clientSp.Id -ResourceId $clientSp.Id -PrincipalId $user.Id -AppRoleId "00000000-0000-0000-0000-000000000000"
+
 }
