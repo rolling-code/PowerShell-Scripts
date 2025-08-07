@@ -26,6 +26,7 @@ PowerShell-Scripts/
 │   └── check_smb_settings_all_domain_joined_pc_using_wmi_and_remote_registry.ps1
 │   └── inactive_users.ps1
 │   └── is_ldap_signing_enabled.ps1
+│   └── replicate_permissions.ps1
 └── README.md
 ```
 
@@ -206,3 +207,14 @@ The provided script automates a delegated‐consent grant of Microsoft Graph per
 - Assigns the app to the user so it’s visible in their My Apps portal.
 
 An illicit consent grant attack abuses this exact flow. An attacker automates the creation of a malicious app, tricks a user into granting it high-risk scopes, and then uses those tokens to exfiltrate data—bypassing credentials and MFA entirely. By scripting consent grants at scale, adversaries can stealthily establish persistent backdoors.
+
+---
+**replicate_permissions.ps1**
+
+audits permissions on an Active Directory user object.
+- Accepts a SamAccountName as a parameter.
+- Looks up the user’s DistinguishedName in AD.
+- Retrieves the object’s Access Control List (ACL).
+- Filters ACL entries to find where that same user (AIM\<UserSamAccountName>) has ExtendedRight privileges.
+- Outputs a table showing who holds the right, what object type it applies to, the kind of rights, and whether it’s Allow or Deny.
+Use this to verify special delegation or extended rights granted to a user against their own AD object.
