@@ -223,6 +223,10 @@ Audits permissions on an Active Directory user object.
 - Outputs a table showing who holds the right, what object type it applies to, the kind of rights, and whether it’s Allow or Deny.
 Use this to verify special delegation or extended rights granted to a user against their own AD object.
 
+Use like so:
+`.\replicate_permissions.ps1 -UserName "XXX\yyy"`
+`.\replicate_permissions.ps1 -UserName "mario@xxx.net"`
+
 ---
 **replicated_rights2.ps1** (Requires PowerView!)
 
@@ -231,7 +235,6 @@ Identifies which AD objects include access control entries (ACEs) granting the t
 - GenericAll
 - WriteProperty
 - ExtendedRight
-
 
 Use like so:
 `.\replicated_rights2.ps1 -UserAccountName 'XXX\krbtgt' -SearchBase 'DC=xxx,DC=yyy' -Verbose`
