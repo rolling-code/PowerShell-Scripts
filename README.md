@@ -93,7 +93,7 @@ Uses AADinternals to run Eight security checks on the tenant.
 8) Block Legacy Authentication
 
 ---
-**ad_object_permissions3.ps1**
+**ad_object_permissions3.ps1** (Requires PowerView!)
 
 Audits Active Directory permissions for a given user and all the groups they belong to, within a specified LDAP container. It reports every Access Control Entry (ACE) that grants the user or their groups any rights on objects under the search base.
 
@@ -113,7 +113,7 @@ Keep an eye out for anything that shows
  WriteProperty or DeleteChild (Rights that allow modifying critical attributes (password resets, group membership) or removing child objects (users, computers))
 
 ---
-**delegated_rights.ps1**
+**delegated_rights.ps1** (Requires PowerView!)
 
 Audits explicit ACLs for a single account under a given AD container. It dumps every Access Control Entry (ACE) on objects beneath your search base where the ACE’s IdentityReference exactly matches the provided username.
 
@@ -126,7 +126,7 @@ Use like so:
 Discovers every domain-joined Windows Server via Active Directory, then remotely enumerates each server’s SMB shares and their share-level permissions.
 
 ---
-**gpo_delegation_check2.ps1**
+**gpo_delegation_check2.ps1** (Requires PowerView!)
 
 Audits Group Policy Object (GPO) permissions across your Active Directory domain, focusing on the key delegation levels you care about: read, edit, and full‐control.
 - If you see a trustee listed under GpoAll, they can fully manage that GPO—critically important for change control.
@@ -213,7 +213,7 @@ The provided script automates a delegated‐consent grant of Microsoft Graph per
 An illicit consent grant attack abuses this exact flow. An attacker automates the creation of a malicious app, tricks a user into granting it high-risk scopes, and then uses those tokens to exfiltrate data—bypassing credentials and MFA entirely. By scripting consent grants at scale, adversaries can stealthily establish persistent backdoors.
 
 ---
-**replicate_permissions.ps1**
+**replicate_permissions.ps1** (Requires PowerView!)
 
 Audits permissions on an Active Directory user object.
 - Accepts a SamAccountName as a parameter.
@@ -224,7 +224,7 @@ Audits permissions on an Active Directory user object.
 Use this to verify special delegation or extended rights granted to a user against their own AD object.
 
 ---
-**replicated_rights2.ps1**
+**replicated_rights2.ps1** (Requires PowerView!)
 
 Scans Active Directory objects under a specified subtree and reports any entries that grant a particular user elevated permissions.
 Identifies which AD objects include access control entries (ACEs) granting the target account any of the following rights:
