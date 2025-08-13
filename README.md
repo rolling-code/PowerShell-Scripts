@@ -30,6 +30,7 @@ PowerShell-Scripts/
 │   └── replicated_rights2.ps1
 │   └── setNoPreauth.ps1
 │   └── AD_Audit_Script.ps1
+│   └── GpoAclAudit.ps1
 └── README.md
 ```
 
@@ -248,3 +249,13 @@ Use like so:
 
 This uses PowerSploit. Ergo better to use in PowerShell 5.1 (just run powershell.exe -Version 5.1).
 Creates a report file for you.
+
+---
+**GpoAclAudit.ps1** (Rerquires PowerView!)
+
+Audit powerful rights over GPOs. Inactive accounts are shown in red.
+
+Use like so:
+`.\GpoAclAudit.ps1 -DomainName xxx.net`
+
+
