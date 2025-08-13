@@ -251,7 +251,7 @@ This uses PowerSploit. Ergo better to use in PowerShell 5.1 (just run powershell
 Creates a report file for you.
 
 ---
-**GpoAclAudit.ps1** (Rerquires PowerView!)
+**GpoAclAudit.ps1** (Requires PowerView!)
 
 Audit powerful rights over GPOs. Inactive accounts are shown in red.
 
