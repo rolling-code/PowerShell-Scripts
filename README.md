@@ -219,7 +219,7 @@ Audits permissions on an Active Directory user object.
 - Accepts a SamAccountName as a parameter.
 - Looks up the user’s DistinguishedName in AD.
 - Retrieves the object’s Access Control List (ACL).
-- Filters ACL entries to find where that same user (AIM\<UserSamAccountName>) has ExtendedRight privileges.
+- Filters ACL entries to find where that same user (XXX\<UserSamAccountName>) has ExtendedRight privileges.
 - Outputs a table showing who holds the right, what object type it applies to, the kind of rights, and whether it’s Allow or Deny.
 Use this to verify special delegation or extended rights granted to a user against their own AD object.
 
