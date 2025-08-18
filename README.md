@@ -14,6 +14,7 @@ PowerShell-Scripts/
 │   └── aadinternals_audit6.ps1
 │   └── get_policies.ps1
 │   └── grant_consent_MSGraph.ps1
+│   └── sendmail.py
 ├── On-Prem Active Directory/
 │   └── ad_object_permissions3.ps1
 │   └── delegated_rights.ps1
@@ -261,4 +262,10 @@ Audit powerful rights over GPOs. Inactive accounts are shown in red.
 Use like so:
 `.\GpoAclAudit.ps1 -DomainName xxx.net`
 
+---
+**sendmail.py**
 
+Send email impersonations, need "Mail.Send" permissions.
+
+Use like so:
+`python .\sendmail.py`
