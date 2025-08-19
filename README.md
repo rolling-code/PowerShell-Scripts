@@ -135,7 +135,7 @@ Audits Group Policy Object (GPO) permissions across your Active Directory domain
 - GpoRead entries tell you who can view but not alter a GPO.
 
 ---
-**get_policies.ps1**
+**get_policies.ps1** (Must be granted access to MS Graph!)
 
 Determines which Azure AD Conditional Access (CA) policies apply to a specific user, evaluating both direct user inclusion/exclusion and group or role–based assignments.
 
