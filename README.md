@@ -203,7 +203,7 @@ UserUPN: mcontestabile@yyy.net
 Password: *************
 
 ---
-**grant_consent_MSGraph.ps1**
+**grant_consent_MSGraph.ps1** (Must be granted access to MS Graph!)
 
 The provided script automates a delegated‐consent grant of Microsoft Graph permissions to a user on behalf of an application. In essence, it:
 - Connects to Microsoft Graph with elevated scopes.
