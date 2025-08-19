@@ -32,6 +32,7 @@ PowerShell-Scripts/
 │   └── setNoPreauth.ps1
 │   └── AD_Audit_Script.ps1
 │   └── GpoAclAudit.ps1
+│   └── GetUsersAndTheirManagedByMachines.ps1
 └── README.md
 ```
 
@@ -269,3 +270,9 @@ Send email impersonations, need "Mail.Send" permissions.
 
 Use like so:
 `python .\sendmail.py`
+
+---
+**GetUsersAndTheirManagedByMachines.ps1**
+
+Will generate a spreadsheet (AD-UserComputer-Audit.csv) for all users in your AD with computer they manage.
+
