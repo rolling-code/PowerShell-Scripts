@@ -283,11 +283,11 @@ Will generate a spreadsheet (AD-UserComputer-Audit.csv) for all users in your AD
 Given a list of domain will provide DNS info. I use it in combination with the domains in a tenant to get info on them (is it on wix, aws, etc..)
 
 Use like so, first get domains from tenant:
-`az rest `
-   --method GET `
-   --uri "https://graph.microsoft.com/v1.0/domains" `
-   --headers "Content-Type=application/json" `
-   --query "value[].{Name:id,IsVerified:isVerified,AuthType:authenticationType}" `
+`az rest \`
+   --method GET \`
+   --uri "https://graph.microsoft.com/v1.0/domains" \`
+   --headers "Content-Type=application/json" \`
+   --query "value[].{Name:id,IsVerified:isVerified,AuthType:authenticationType}" \`
    -o table > all_domains.txt`
 
    Results piped to all_domains.txt which we will feed into the script like so:
