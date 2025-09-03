@@ -34,6 +34,7 @@ PowerShell-Scripts/
 │   └── AD_Audit_Script.ps1
 │   └── GpoAclAudit.ps1
 │   └── GetUsersAndTheirManagedByMachines.ps1
+│   └── test_shares_read_write.ps1
 └── README.md
 ```
 
@@ -288,3 +289,13 @@ Use like so, first get domains from tenant:
 Results piped to all_domains.txt which we will feed into the script like so:
 
 `.\domains2ipsipv4Only.ps1 -InputPath all_domains.txt -OutputPath ips.txt`
+
+---
+**test_shares_read_write.ps1** (Requires PowerView!)
+
+Given the output from:
+`Invoke-ShareFinder | Export-Csv .\shared_folders.csv -NoTypeInformation`
+
+This script will read the file "shared_folders.csv" and generate "ShareSecurityReport.csv".
+
+Good targets to examine further on your AD are those shares shown as "DISK" and Readble is "TRUE"
