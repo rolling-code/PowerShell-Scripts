@@ -35,6 +35,7 @@ PowerShell-Scripts/
 │   └── GpoAclAudit.ps1
 │   └── GetUsersAndTheirManagedByMachines.ps1
 │   └── test_shares_read_write.ps1
+│   └── analyze_gpo3.ps1
 └── README.md
 ```
 
@@ -299,3 +300,26 @@ Given the output from:
 This script will read the file "shared_folders.csv" and generate "ShareSecurityReport.csv".
 
 Good targets to examine further on your AD are those shares shown as "DISK" and Readble is "TRUE"
+
+---
+**analyze_gpo3.ps1**
+
+Tries get gather info on the GPO's pushed to your machuine.
+Loads the GPResult XML from disk
+Gets GUIDS
+For each extracted GUID, Builds the folder name, if found, scans subfolders for
+ - registry.pol (machine)
+ - Software installation XMLs 
+ - Startup/Logon script
+ - Preference XMLs
+ - If the GroupPolicy module is loaded, Generates a temporary XML report
+ - Build Consolidated Output Object
+
+Step 1: Run `gpresult /x C:\Temp\gpresult.xml /SCOPE COMPUTER`
+Step 2: Run `.\analyze_gpo3.ps1 -GPResultXml C:\Temp\gpresult.xml -SysvolRoot "\\your.domain.here\SYSVOL\domain.net\Policies"`
+
+You will see good output. YOu can get additional details by running:
+
+`Get-GPOReport -Id XXX -ReportType XML`
+
+with the GUIDS produced at step 2.
