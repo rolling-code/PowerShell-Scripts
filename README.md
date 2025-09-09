@@ -336,9 +336,11 @@ It uses 3 feeds updated daily:
 3- https://raw.githubusercontent.com/stamparm/ipsum/master/ipsum.txt
  
 URLhaus is a project from abuse.ch with the goal of sharing malicious URLs that are being used for malware distribution.
+
 OpenPhish receives URLs from multiple streams and analyzes them using its proprietary phishing detection algorithms.
+
 IPsum is a threat intelligence feed based on 30+ different publicly available lists of suspicious and/or malicious IP addresses. All lists are automatically retrieved and parsed on a daily (24h) basis and the final result is pushed to this repository. List is made of IP addresses together with a total number of (black)list occurrence (for each).
- 
- Run this from where we have some "security filtering" in place and get a good idea if the machine is protected! Enjoy!
+
+Run this from where we have some "security filtering" in place and get a good idea if the machine is protected! Enjoy!
  
 (Run with -Quick to just do 25 lines)
