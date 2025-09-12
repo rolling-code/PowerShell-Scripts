@@ -219,7 +219,7 @@ The provided script automates a delegated‐consent grant of Microsoft Graph per
 An illicit consent grant attack abuses this exact flow. An attacker automates the creation of a malicious app, tricks a user into granting it high-risk scopes, and then uses those tokens to exfiltrate data—bypassing credentials and MFA entirely. By scripting consent grants at scale, adversaries can stealthily establish persistent backdoors.
 
 ---
-**replicate_permissions.ps1** (Requires PowerView!)
+**replicate_permissions.ps1**
 
 Audits permissions on an Active Directory user object.
 - Accepts a SamAccountName as a parameter.
@@ -231,6 +231,7 @@ Use this to verify special delegation or extended rights granted to a user again
 
 Use like so:
 `.\replicate_permissions.ps1 -UserName "XXX\yyy"`
+
 `.\replicate_permissions.ps1 -UserName "mario@xxx.net"`
 
 ---
