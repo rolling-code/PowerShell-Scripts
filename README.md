@@ -132,7 +132,7 @@ Use like so:
 Discovers every domain-joined Windows Server via Active Directory, then remotely enumerates each server’s SMB shares and their share-level permissions.
 
 ---
-**gpo_delegation_check2.ps1** (Requires PowerView!)
+**gpo_delegation_check2.ps1**
 
 Audits Group Policy Object (GPO) permissions across your Active Directory domain, focusing on the key delegation levels you care about: read, edit, and full‐control.
 - If you see a trustee listed under GpoAll, they can fully manage that GPO—critically important for change control.
