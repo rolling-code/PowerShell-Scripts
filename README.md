@@ -119,7 +119,7 @@ Keep an eye out for anything that shows
  WriteProperty or DeleteChild (Rights that allow modifying critical attributes (password resets, group membership) or removing child objects (users, computers))
 
 ---
-**delegated_rights.ps1** (Requires PowerView!)
+**delegated_rights.ps1**
 
 Audits explicit ACLs for a single account under a given AD container. It dumps every Access Control Entry (ACE) on objects beneath your search base where the ACE’s IdentityReference exactly matches the provided username.
 
