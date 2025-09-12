@@ -12,7 +12,7 @@ PowerShell-Scripts/
 │   └── Test-Feeds3.ps1
 ├── Azure Active Directory/
 │   └── get_az_token.ps1
-│   └── aadinternals_audit6.ps1
+│   └── aadinternals_audit6.ps1 (Uses AADInternals)
 │   └── get_policies.ps1
 │   └── grant_consent_MSGraph.ps1
 │   └── sendmail.py
@@ -33,7 +33,7 @@ PowerShell-Scripts/
 │   └── replicated_rights2.ps1 (uses ActiveDirectory module (ADWS))
 │   └── setNoPreauth.ps1
 │   └── AD_Audit_Script.ps1 (uses PowerSploit and ActiveDirectory module (ADWS))
-│   └── GpoAclAudit.ps1
+│   └── GpoAclAudit.ps1 (uses PowerSploit)
 │   └── GetUsersAndTheirManagedByMachines.ps1 (uses ActiveDirectory module (ADWS))
 │   └── test_shares_read_write.ps1
 │   └── analyze_gpo3.ps1 (imports modules: GroupPolicy)
