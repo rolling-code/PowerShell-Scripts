@@ -235,7 +235,7 @@ Use like so:
 `.\replicate_permissions.ps1 -UserName "mario@xxx.net"`
 
 ---
-**replicated_rights2.ps1** (Requires PowerView!)
+**replicated_rights2.ps1**
 
 Scans Active Directory objects under a specified subtree and reports any entries that grant a particular user elevated permissions.
 Identifies which AD objects include access control entries (ACEs) granting the target account any of the following rights:
