@@ -18,25 +18,25 @@ PowerShell-Scripts/
 │   └── sendmail.py
 │   └── domains2ipsipv4Only.ps1
 ├── On-Prem Active Directory/
-│   └── ad_object_permissions3.ps1
-│   └── delegated_rights.ps1
-│   └── servers_get_smb.ps1
-│   └── gpo_delegation_check2.ps1
+│   └── ad_object_permissions3.ps1 (uses ActiveDirectory module (ADWS))
+│   └── delegated_rights.ps1 (uses ActiveDirectory module (ADWS))
+│   └── servers_get_smb.ps1 (uses ActiveDirectory module (ADWS))
+│   └── gpo_delegation_check2.ps1 (imports modules: GroupPolicy)
 │   └── whois_islocal_admin2.ps1
-│   └── check_blank_password_users.ps1
-│   └── check_PSSession_blank_passwords2.ps1
-│   └── check_smb_settings_all_domain_joined_pc_using_ps_remoting.ps1
-│   └── check_smb_settings_all_domain_joined_pc_using_wmi_and_remote_registry.ps1
-│   └── inactive_users.ps1
-│   └── is_ldap_signing_enabled.ps1
-│   └── replicate_permissions.ps1
-│   └── replicated_rights2.ps1
+│   └── check_blank_password_users.ps1 (uses ActiveDirectory module (ADWS))
+│   └── check_PSSession_blank_passwords2.ps1 (uses ActiveDirectory module (ADWS))
+│   └── check_smb_settings_all_domain_joined_pc_using_ps_remoting.ps1 (uses ActiveDirectory module (ADWS))
+│   └── check_smb_settings_all_domain_joined_pc_using_wmi_and_remote_registry.ps1 (uses ActiveDirectory module (ADWS) and WMI)
+│   └── inactive_users.ps1 (uses ActiveDirectory module (ADWS))
+│   └── is_ldap_signing_enabled.ps1 (relies on raw LDAP/ADSI)
+│   └── replicate_permissions.ps1 (uses ActiveDirectory module (ADWS))
+│   └── replicated_rights2.ps1 (uses ActiveDirectory module (ADWS))
 │   └── setNoPreauth.ps1
-│   └── AD_Audit_Script.ps1
+│   └── AD_Audit_Script.ps1 (uses PowerSploit and ActiveDirectory module (ADWS))
 │   └── GpoAclAudit.ps1
-│   └── GetUsersAndTheirManagedByMachines.ps1
+│   └── GetUsersAndTheirManagedByMachines.ps1 (uses ActiveDirectory module (ADWS))
 │   └── test_shares_read_write.ps1
-│   └── analyze_gpo3.ps1
+│   └── analyze_gpo3.ps1 (imports modules: GroupPolicy)
 └── README.md
 ```
 
