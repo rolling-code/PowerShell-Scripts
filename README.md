@@ -99,7 +99,7 @@ Uses AADinternals to run Eight security checks on the tenant.
 8) Block Legacy Authentication
 
 ---
-**ad_object_permissions3.ps1** (Requires PowerView!)
+**ad_object_permissions3.ps1**
 
 Audits Active Directory permissions for a given user and all the groups they belong to, within a specified LDAP container. It reports every Access Control Entry (ACE) that grants the user or their groups any rights on objects under the search base.
 
