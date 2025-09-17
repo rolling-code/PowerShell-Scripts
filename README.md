@@ -37,6 +37,7 @@ PowerShell-Scripts/
 │   └── GetUsersAndTheirManagedByMachines.ps1 (uses ActiveDirectory module (ADWS))
 │   └── test_shares_read_write.ps1
 │   └── analyze_gpo3.ps1 (imports modules: GroupPolicy)
+│   └── lan_audit_full2.ps1
 └── README.md
 ```
 
@@ -337,11 +338,24 @@ It uses 3 feeds updated daily:<br>
 3- https://raw.githubusercontent.com/stamparm/ipsum/master/ipsum.txt<br>
  
 URLhaus is a project from abuse.ch with the goal of sharing malicious URLs that are being used for malware distribution.
-
 OpenPhish receives URLs from multiple streams and analyzes them using its proprietary phishing detection algorithms.
-
 IPsum is a threat intelligence feed based on 30+ different publicly available lists of suspicious and/or malicious IP addresses. All lists are automatically retrieved and parsed on a daily (24h) basis and the final result is pushed to this repository. List is made of IP addresses together with a total number of (black)list occurrence (for each).
 
 Run this from where we have some "security filtering" in place and get a good idea if the machine is protected! Enjoy!
  
 (Run with -Quick to just do 25 lines)
+
+---
+**lan_audit_full2.ps1**
+
+This is a great tool to uncover secrets on a LAN. Corporations unknowingly share files. Developers unknowingly leave files behind. This script will:
+1. Go over each file in the folder and subfolder
+2. If it is a spreadsheet or Word or PDF document it will open those as well
+3. It will search files for known secret values such as
+      1. AWS Access Keys
+      2. GitHub Tokens
+      3. Private Keys
+      4. Etc...a whole lot more
+
+Use like:
+`.\lan_audit_full2.ps1 "\\somedc.somedomain.net\UNCName\Any Folders" audit_report.csv`
