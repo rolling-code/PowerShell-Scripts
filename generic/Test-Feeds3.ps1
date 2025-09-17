@@ -8,26 +8,86 @@ param(
     [switch]$Quick
 )
 
-# ==== CONFIGURATION ====
+# ==== CONFIGURATION & GLOBAL COUNTERS ====
 $tempDir = "C:\temp"
 if (-not (Test-Path $tempDir)) {
     New-Item -Path $tempDir -ItemType Directory | Out-Null
 }
 
-$script:TotalTests   = 0
-$script:SuccessCount = 0
-$script:FailCount    = 0
+# Grand totals
+$script:TotalEntries   = 0
+$script:ProcessedCount = 0
 
-# Hashtable to remember tested Host:Port combos
+# Per-feed counters – initialize everything to zero up front
+$script:URLhausTotal   = 0; $script:URLhausSuccess   = 0; $script:URLhausFail   = 0
+$script:OpenPhishTotal = 0; $script:OpenPhishSuccess = 0; $script:OpenPhishFail = 0
+$script:IPSumTotal     = 0; $script:IPSumSuccess     = 0; $script:IPSumFail     = 0
+
+
+
+# Per-feed counters - same as above pick one
+$feeds = 'URLhaus','OpenPhish','IPSum'
+foreach ($f in $feeds) {
+    Set-Variable -Name "${f}Total"   -Scope Script -Value 0
+    Set-Variable -Name "${f}Success" -Scope Script -Value 0
+    Set-Variable -Name "${f}Fail"    -Scope Script -Value 0
+}
+ 
+# Deduplication table
 $Tested = @{}
 
+# ==== FAST TCP PORT TESTER ====
+function Test-Port {
+    [CmdletBinding()]
+    param(
+        [Alias('Host')]
+        [Parameter(Mandatory, Position=0)]
+        [ValidateNotNullOrEmpty()]
+        [string]$ComputerName,
+
+        [Parameter(Mandatory, Position=1)]
+        [int]$Port,
+
+        [Parameter()]
+        [int]$TimeoutMs = 300 #A 1 000 ms (1 s) or even 2 000 ms timeout will cover typical cross-Pacific latencies without slowing down local tests too much.
+    )
+
+    $client = New-Object System.Net.Sockets.TcpClient
+    try {
+        $async = $client.BeginConnect($ComputerName, $Port, $null, $null)
+        if ($async.AsyncWaitHandle.WaitOne($TimeoutMs)) {
+            $client.EndConnect($async)
+            return $true
+        }
+        return $false
+    }
+    catch {
+        return $false
+    }
+    finally {
+        $client.Close()
+    }
+}
+
+# ==== PROCESS URL ====
 function Process-Url {
-    param($url)
-    try { $u = [Uri]$url } catch {
-        Write-Host "Invalid URL skipped: $url" -ForegroundColor Yellow
+    param(
+        [string]$Url,
+        [string]$FeedName
+    )
+    try {
+        $u = [Uri]$Url
+    } catch {
+        Write-Host "Invalid URL skipped: $Url" -ForegroundColor Yellow
         return
     }
-    $port = if ($u.IsDefaultPort) { if ($u.Scheme -eq 'https') {443} else {80} } else { $u.Port }
+
+    $port = if ($u.IsDefaultPort) {
+        if ($u.Scheme -eq 'https') { 443 } else { 80 }
+    } else {
+        $u.Port
+    }
+
     $key = "$($u.Host):$port"
     if ($Tested.ContainsKey($key)) {
         Write-Host "Skipping already tested $key" -ForegroundColor DarkGray
@@ -35,95 +95,101 @@ function Process-Url {
     }
     $Tested[$key] = $true
 
-    $target = $u.Host
-    if (-not [IPAddress]::TryParse($target, [ref]$null)) {
-        $dnsServer = (Get-DnsClientServerAddress -AddressFamily IPv4 | Select-Object -First 1).ServerAddresses[0]
-        if ($dnsServer) {
-            $res = Resolve-DnsName -Name $target -Server $dnsServer -ErrorAction SilentlyContinue |
-                   Where-Object IPAddress | Select-Object -First 1
-            if ($res) {
-                Write-Host "Resolved $target to $($res.IPAddress) via DNS $dnsServer" -ForegroundColor Magenta
-                $target = $res.IPAddress
-            } else {
-                Write-Host "DNS resolution failed for $target" -ForegroundColor Yellow
-            }
-        }
-    }
+    # Increment counters
+    $script:ProcessedCount++
+    Set-Variable -Name "${FeedName}Total" -Scope Script `
+        -Value ((Get-Variable -Name "${FeedName}Total" -Scope Script).Value + 1)
 
-    $script:TotalTests++
-    if (Test-NetConnection -ComputerName $target -Port $port -InformationLevel Quiet) {
-        Write-Host "$($u.Host):$port → Success ($url)" -ForegroundColor Red
-        $script:SuccessCount++
+    if (Test-Port $u.Host $port) {
+        Set-Variable -Name "${FeedName}Success" -Scope Script `
+            -Value ((Get-Variable -Name "${FeedName}Success" -Scope Script).Value + 1)
+
+        Write-Host ("[{0}/{1}] {2}:{3} → Success ({4})" `
+            -f $script:ProcessedCount, $script:TotalEntries, $u.Host, $port, $Url) `
+            -ForegroundColor Red
     } else {
-        Write-Host "$($u.Host):$port → Failed ($url)" -ForegroundColor Green
-        $script:FailCount++
+        Set-Variable -Name "${FeedName}Fail" -Scope Script `
+            -Value ((Get-Variable -Name "${FeedName}Fail" -Scope Script).Value + 1)
+
+        Write-Host ("[{0}/{1}] {2}:{3} → Failed ({4})" `
+            -f $script:ProcessedCount, $script:TotalEntries, $u.Host, $port, $Url) `
+            -ForegroundColor Green
     }
 }
 
 function Process-Ip {
-    param($ip)
+    param(
+        [string]$Ip,
+        [string]$FeedName
+    )
 
     $succeeded = $false
-    foreach ($p in 80, 443) {
-        # Sub-expressions ensure the colon isn’t parsed as part of a variable name
-        $key = "$($ip):$($p)"
+    foreach ($p in 80,443) {
+        # fix the interpolation here
+        $key = "$($Ip):$($p)"
         if ($Tested.ContainsKey($key)) {
             Write-Host "Skipping already tested $key" -ForegroundColor DarkGray
             continue
         }
         $Tested[$key] = $true
 
-        $script:TotalTests++
-        if (Test-NetConnection -ComputerName $ip -Port $p -InformationLevel Quiet) {
-            Write-Host "$key → Success" -ForegroundColor Red
-            $script:SuccessCount++
+        $script:ProcessedCount++
+        Set-Variable -Name "${FeedName}Total" -Scope Script `
+            -Value ((Get-Variable -Name "${FeedName}Total" -Scope Script).Value + 1)
+
+        if (Test-Port $Ip $p) {
+            Set-Variable -Name "${FeedName}Success" -Scope Script `
+                -Value ((Get-Variable -Name "${FeedName}Success" -Scope Script).Value + 1)
+
+            Write-Host ("[{0}/{1}] {2}:{3} → Success" `
+                -f $script:ProcessedCount, $script:TotalEntries, $Ip, $p) `
+                -ForegroundColor Red
             $succeeded = $true
             break
         }
     }
 
     if (-not $succeeded) {
-        Write-Host "$($ip) → Failed on ports 80 & 443" -ForegroundColor Green
-        $script:FailCount++
+        Set-Variable -Name "${FeedName}Fail" -Scope Script `
+            -Value ((Get-Variable -Name "${FeedName}Fail" -Scope Script).Value + 1)
+
+        Write-Host ("[{0}/{1}] {2} → Failed on ports 80 & 443" `
+            -f $script:ProcessedCount, $script:TotalEntries, $Ip) `
+            -ForegroundColor Green
     }
 }
 
-# ==== STEP 1: URLhaus CSV Feed ====
+# ==== STEP 1: URLhaus Feed ====
 $zipUrl     = "https://urlhaus.abuse.ch/downloads/csv/"
 $zipFile    = Join-Path $tempDir "URLhaus.zip"
 $extractDir = Join-Path $tempDir "URLhaus"
 
 Write-Host "`nDownloading URLhaus feed from $zipUrl" -ForegroundColor Cyan
 Invoke-WebRequest -Uri $zipUrl -OutFile $zipFile -UseBasicParsing
+
 Write-Host "Extracting to $extractDir" -ForegroundColor Cyan
 Expand-Archive -LiteralPath $zipFile -DestinationPath $extractDir -Force
 
 $csvFile = Get-ChildItem -Path $extractDir -Filter '*.txt' -File | Select-Object -First 1
 if ($csvFile) {
-    $lines = Get-Content $csvFile.FullName
+    $allUrlLines = Get-Content $csvFile.FullName |
+        Where-Object { -not $_.StartsWith('#') -and -not [string]::IsNullOrWhiteSpace($_) }
     if ($Quick) {
-        $lines = $lines[0..([Math]::Min(24, $lines.Count - 1))]
+        $urlLines = $allUrlLines[0..([Math]::Min(24, $allUrlLines.Count - 1))]
+    } else {
+        $urlLines = $allUrlLines
     }
+    $script:TotalEntries += $urlLines.Count
 
-    $last = ($lines | Where-Object { $_ -match '^#\s*Last updated:' })[0]
-    Write-Host "`nurlhaus.abuse.ch" -ForegroundColor Cyan
-    if ($last) {
-        $clean = $last -replace '^#\s*', ''
-        Write-Host $clean -ForegroundColor Cyan
-    }
-
-    foreach ($line in $lines) {
-        if ($line.StartsWith('#') -or [string]::IsNullOrWhiteSpace($line)) { continue }
+    Write-Host "`nProcessing URLhaus URLs" -ForegroundColor Cyan
+    foreach ($line in $urlLines) {
         if ($line -match '^".*",".*",".*",".*",".*",".*",".*",".*",".*"$') {
             $fields = $line.Trim('"') -split '","'
-            Process-Url $fields[2]
+            Process-Url $fields[2] 'URLhaus'
         } else {
             Write-Host "Skipping malformed line: $line" -ForegroundColor Yellow
         }
     }
-	$lines = Get-Content $csvFile.FullName
-	Write-Host "URLhaus lines read: $($lines.Count)"
-	if ($Quick) { $lines = $lines[0..([Math]::Min(24, $lines.Count-1))] }
 } else {
     Write-Host "No CSV .txt file found in $extractDir" -ForegroundColor Yellow
 }
@@ -137,19 +203,18 @@ $feed2File = Join-Path $tempDir "openphish.txt"
 Write-Host "`nDownloading OpenPhish feed" -ForegroundColor Cyan
 Invoke-WebRequest -Uri $feed2Url -OutFile $feed2File -UseBasicParsing
 
-$opfLines = Get-Content $feed2File
+$opfAll    = Get-Content $feed2File
+$opfLines  = $opfAll | Where-Object { $_ -match '^https?://' }
 if ($Quick) {
     $opfLines = $opfLines[0..([Math]::Min(24, $opfLines.Count - 1))]
 }
+$script:TotalEntries += $opfLines.Count
 
-Write-Host "`nraw.githubusercontent.com/openphish/public_feed" -ForegroundColor Cyan
+Write-Host "`nProcessing OpenPhish URLs" -ForegroundColor Cyan
 foreach ($u in $opfLines) {
-    if ($u -match '^https?://') {
-        Process-Url $u
-    }
+    Process-Url $u 'OpenPhish'
 }
-$opfLines = Get-Content $feed2File
-Write-Host "OpenPhish lines read: $($opfLines.Count)"
+
 Remove-Item -Path $feed2File -Force
 
 # ==== STEP 3: IPSum IP Feed ====
@@ -159,26 +224,38 @@ $feed3File = Join-Path $tempDir "ipsum.txt"
 Write-Host "`nDownloading IPSum feed" -ForegroundColor Cyan
 Invoke-WebRequest -Uri $feed3Url -OutFile $feed3File -UseBasicParsing
 
-$ipsumLines = Get-Content $feed3File
+$ipsumAll = Get-Content $feed3File
+$ipsumLines = $ipsumAll | Where-Object { $_ -match '^\d+\.\d+\.\d+\.\d+' }
 if ($Quick) {
     $ipsumLines = $ipsumLines[0..([Math]::Min(24, $ipsumLines.Count - 1))]
 }
 
-#Write-Host "`n# IPsum Threat Intelligence Feed" -ForegroundColor Cyan
-#Write-Host "# (https://github.com/stamparm/ipsum)" -ForegroundColor Cyan
-$ipsumLines | Select-Object -First 4 | ForEach-Object { Write-Host $_ -ForegroundColor Cyan }
+# $script:TotalEntries += $ipsumLines.Count
+# count each IP twice (ports 80 & 443)
+$script:TotalEntries += ($ipsumLines.Count * 2)
 
+Write-Host "`nProcessing IPSum IPs" -ForegroundColor Cyan
 foreach ($line in $ipsumLines) {
-    if (-not $line.StartsWith('#') -and $line -match '\d+\.\d+\.\d+\.\d+') {
-        $ip = ($line -split '\s+')[0]
-        Process-Ip $ip
-    }
+    $ip = ($line -split '\s+')[0]
+    Process-Ip $ip 'IPSum'
 }
-$ipsumLines = Get-Content $feed3File
-Write-Host "IPSum lines read: $($opfLines.Count)"
+
 Remove-Item -Path $feed3File -Force
 
-# ==== FINAL SUMMARY ====  
-Write-Host "`n# IPs/Domains: $script:TotalTests"
-Write-Host "# Successful connections: $script:SuccessCount"
-Write-Host "# Unsuccessful connections: $script:FailCount"
+# ==== FINAL SUMMARY ====
+Write-Host "`n# GRAND TOTALS" -ForegroundColor Cyan
+$overallSuccess = $URLhausSuccess + $OpenPhishSuccess + $IPSumSuccess
+$overallFail    = $URLhausFail    + $OpenPhishFail    + $IPSumFail
+
+Write-Host "# Entries processed:       $script:TotalEntries"
+Write-Host "# Overall Success:        $overallSuccess"
+Write-Host "# Overall Failures:       $overallFail"
+
+Write-Host "`n# Per-Feed Breakdown" -ForegroundColor Cyan
+foreach ($f in $feeds) {
+    $t = (Get-Variable -Name "${f}Total"   -Scope Script).Value
+    $s = (Get-Variable -Name "${f}Success" -Scope Script).Value
+    $e = (Get-Variable -Name "${f}Fail"    -Scope Script).Value
+    Write-Host ("# {0,-10} → Total: {1,-4}  Success: {2,-4}  Fail: {3,-4}" `
+        -f $f, $t, $s, $e)
+}
