@@ -331,10 +331,10 @@ with the GUIDS produced at step 2.
 
 Run this script to validate network filtering, from the machine it is run on.
  
-It uses 3 feeds updated daily:
-1- https://urlhaus.abuse.ch/api/#csv
-2- https://raw.githubusercontent.com/openphish/public_feed/refs/heads/main/feed.txt
-3- https://raw.githubusercontent.com/stamparm/ipsum/master/ipsum.txt
+It uses 3 feeds updated daily:<br>
+1- https://urlhaus.abuse.ch/api/#csv<br>
+2- https://raw.githubusercontent.com/openphish/public_feed/refs/heads/main/feed.txt<br>
+3- https://raw.githubusercontent.com/stamparm/ipsum/master/ipsum.txt<br>
  
 URLhaus is a project from abuse.ch with the goal of sharing malicious URLs that are being used for malware distribution.
 
