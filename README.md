@@ -17,6 +17,7 @@ PowerShell-Scripts/
 │   └── grant_consent_MSGraph.ps1
 │   └── sendmail.py
 │   └── domains2ipsipv4Only.ps1
+│   └── enum_entra_admins.ps1 & find_disabled_ad_accounts.ps1
 ├── On-Prem Active Directory/
 │   └── ad_object_permissions3.ps1 (uses ActiveDirectory module (ADWS))
 │   └── delegated_rights.ps1 (uses ActiveDirectory module (ADWS))
@@ -359,3 +360,13 @@ This is a great tool to uncover secrets on a LAN. Corporations unknowingly share
 
 Use like:
 `.\lan_audit_full2.ps1 "\\somedc.somedomain.net\UNCName\Any Folders" audit_report.csv`
+
+---
+**enum_entra_admins.ps1 & find_disabled_ad_accounts.ps1**
+
+enum_entra_admins.ps1 will look at Entra groups with "administrator" as a display name. 
+Then it will try to find users of that group, and output data to AdminLikeAccounts_Report.csv
+
+find_disabled_ad_accounts.ps1 will read that input file AdminLikeAccounts_Report.csv and try to determine if any of these admins is "disabled".
+It will produce a spreadsheet file named DisabledAccounts_Report.csv
+Admins should investigate these files and clean up their AD/AAD as needed.
