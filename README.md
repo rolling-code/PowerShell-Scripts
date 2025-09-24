@@ -110,8 +110,8 @@ Use like so:
 `.\get_policies.ps1 userPrincipalname@domain.net`
 
 NOTE: Microsoft Graph Command Line Tools must be granted.
-If not you will be prompted like so ![Not enough permissions](Azure%20Active%20Directory/docs/Screenshot%202025-07-30%20135129.png)
-
+If not you will be prompted like so:
+<img src="Azure%20Active%20Directory/docs/Screenshot%202025-07-30%20135129.png" alt="Not enough permissions" width="300" height="500"/>
 ---
 ### `grant_consent_MSGraph.ps1` (Must be granted access to MS Graph!)
 
