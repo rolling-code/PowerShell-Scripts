@@ -58,6 +58,7 @@ Notes:
 - Scripts are organized by domain (e.g., Azure AD, On-Prem AD).
 - Contributions and suggestions are welcome!
 
+## ── 📂 Section: Azure Active Directory ──
 ---
 **get_az_token.ps1**
 
@@ -101,6 +102,102 @@ Uses AADinternals to run Eight security checks on the tenant.
 8) Block Legacy Authentication
 
 ---
+**get_policies.ps1** (Must be granted access to MS Graph!)
+
+Determines which Azure AD Conditional Access (CA) policies apply to a specific user, evaluating both direct user inclusion/exclusion and group or role–based assignments.
+
+Use like so:
+`.\get_policies.ps1 userPrincipalname@domain.net`
+
+NOTE: Microsoft Graph Command Line Tools must be granted.
+If not you will be prompted like so ![Not enough permissions](Azure%20Active%20Directory/docs/Screenshot%202025-07-30%20135129.png)
+
+---
+**grant_consent_MSGraph.ps1** (Must be granted access to MS Graph!)
+
+The provided script automates a delegated‐consent grant of Microsoft Graph permissions to a user on behalf of an application. In essence, it:
+- Connects to Microsoft Graph with elevated scopes.
+- Ensures a service principal exists for the client app (Graph Explorer).
+- Creates an OAuth2 delegated permission grant for that app to call Microsoft Graph APIs as the specified user.
+- Assigns the app to the user so it’s visible in their My Apps portal.
+
+An illicit consent grant attack abuses this exact flow. An attacker automates the creation of a malicious app, tricks a user into granting it high-risk scopes, and then uses those tokens to exfiltrate data—bypassing credentials and MFA entirely. By scripting consent grants at scale, adversaries can stealthily establish persistent backdoors.
+
+---
+**sendmail.py**
+
+Send email impersonations, need "Mail.Send" permissions.
+
+Use like so:
+`python .\sendmail.py`
+
+---
+**domains2ipsipv4Only.ps1**
+
+Given a list of domain will provide DNS info. I use it in combination with the domains in a tenant to get info on them (is it on wix, aws, etc..)
+
+Use like so, first get domains from tenant:
+`az rest --method GET --uri "https://graph.microsoft.com/v1.0/domains" --headers "Content-Type=application/json" --query "value[].{Name:id,IsVerified:isVerified,AuthType:authenticationType}" -o table > all_domains.txt`
+
+Results piped to all_domains.txt which we will feed into the script like so:
+
+`.\domains2ipsipv4Only.ps1 -InputPath all_domains.txt -OutputPath ips.txt`
+
+---
+**enum_entra_admins.ps1 & find_disabled_ad_accounts.ps1**
+
+enum_entra_admins.ps1 will look at Entra groups with "administrator" as a display name. 
+Then it will try to find users of that group, and output data to AdminLikeAccounts_Report.csv
+
+find_disabled_ad_accounts.ps1 will read that input file AdminLikeAccounts_Report.csv and try to determine if any of these admins is "disabled".
+It will produce a spreadsheet file named DisabledAccounts_Report.csv
+Admins should investigate these files and clean up their AD/AAD as needed.
+
+---
+**list_all_applications2.ps1 & .BulkMultiPermExploitability2ps1 & `Profile-App.ps1 & Audit-AppDelegationRisks.ps1**
+
+## 📜 Scripts Overview
+
+### `list_all_applications2.ps1`
+- **Purpose:** Enumerates every registered application and service principal in an Entra ID tenant.  
+- **Use Case:** Provides a broad **inventory baseline** of all apps.  
+- **Frequency:** Run **monthly or quarterly** as part of regular inventory checks.  
+
+---
+### `BulkMultiPermExploitability2.ps1`
+- **Purpose:** Bulk‑checks each app for exploitable Microsoft Graph permissions against a defined high‑risk list.  
+- **Use Case:** Ideal for **tenant‑wide risk sweeps** and permission audits.  
+- **Frequency:** Run **monthly or quarterly** alongside inventory scans.  
+
+---
+### `Profile-App.ps1`
+- **Purpose:** Profiles a single AppId in detail.  
+- **Output Includes:** Owners, credentials, delegated/app‑only permissions, assignments, and recent sign‑ins.  
+- **Use Case:** Produces a **governance‑ready profile** for documentation, incident response, or app reviews.  
+- **Frequency:** Run **ad‑hoc** during investigations, risk reviews, or onboarding/offboarding of third‑party apps.  
+
+---
+### `Audit-AppDelegationRisks.ps1`
+- **Purpose:** Focuses on delegated OAuth2 grants.  
+- **Use Case:** Flags **tenant‑wide consents** with risky scopes and resolves who can access the app.  
+- **Frequency:** Run **ad‑hoc** when reviewing suspicious or high‑risk apps.  
+
+All scripts rely on the **[Microsoft.Graph PowerShell SDK](https://learn.microsoft.com/powershell/microsoftgraph/overview)**  
+Before running the scripts, establish a Graph session with sufficient rights:
+Use like so:
+
+`.\list_all_applications2.ps1` Generates CSV files
+`.\BulkMultiPermExploitability.ps1 -ScopeCsvPath ScopeBreakdown.csv` This parses previously generated CSV file
+
+When you see "Problem!" this is how you dig deeper into the app details
+
+`.\Profile-App.ps1 -TargetAppId dddddd-ba25-43c7-a710-cxxxx` 
+`.\Audit-AppDelegationRisks.ps1 -TargetAppId dddddd-ba25-43c7-a710-cxxxx`
+
+
+
+## ── 📂 Section: On-Prem Active Directory ──
+---
 **ad_object_permissions3.ps1**
 
 Audits Active Directory permissions for a given user and all the groups they belong to, within a specified LDAP container. It reports every Access Control Entry (ACE) that grants the user or their groups any rights on objects under the search base.
@@ -140,17 +237,6 @@ Audits Group Policy Object (GPO) permissions across your Active Directory domain
 - If you see a trustee listed under GpoAll, they can fully manage that GPO—critically important for change control.
 - GpoEdit entries indicate who can modify policy settings.
 - GpoRead entries tell you who can view but not alter a GPO.
-
----
-**get_policies.ps1** (Must be granted access to MS Graph!)
-
-Determines which Azure AD Conditional Access (CA) policies apply to a specific user, evaluating both direct user inclusion/exclusion and group or role–based assignments.
-
-Use like so:
-`.\get_policies.ps1 userPrincipalname@domain.net`
-
-NOTE: Microsoft Graph Command Line Tools must be granted.
-If not you will be prompted like so ![Not enough permissions](Azure%20Active%20Directory/docs/Screenshot%202025-07-30%20135129.png)
 
 ---
 **whois_islocal_admin2.ps1**
@@ -210,17 +296,6 @@ UserUPN: mcontestabile@yyy.net
 Password: *************
 
 ---
-**grant_consent_MSGraph.ps1** (Must be granted access to MS Graph!)
-
-The provided script automates a delegated‐consent grant of Microsoft Graph permissions to a user on behalf of an application. In essence, it:
-- Connects to Microsoft Graph with elevated scopes.
-- Ensures a service principal exists for the client app (Graph Explorer).
-- Creates an OAuth2 delegated permission grant for that app to call Microsoft Graph APIs as the specified user.
-- Assigns the app to the user so it’s visible in their My Apps portal.
-
-An illicit consent grant attack abuses this exact flow. An attacker automates the creation of a malicious app, tricks a user into granting it high-risk scopes, and then uses those tokens to exfiltrate data—bypassing credentials and MFA entirely. By scripting consent grants at scale, adversaries can stealthily establish persistent backdoors.
-
----
 **replicate_permissions.ps1**
 
 Audits permissions on an Active Directory user object.
@@ -271,29 +346,9 @@ Use like so:
 `.\GpoAclAudit.ps1 -DomainName xxx.net`
 
 ---
-**sendmail.py**
-
-Send email impersonations, need "Mail.Send" permissions.
-
-Use like so:
-`python .\sendmail.py`
-
----
 **GetUsersAndTheirManagedByMachines.ps1**
 
 Will generate a spreadsheet (AD-UserComputer-Audit.csv) for all users in your AD with computer they manage.
-
----
-**domains2ipsipv4Only.ps1**
-
-Given a list of domain will provide DNS info. I use it in combination with the domains in a tenant to get info on them (is it on wix, aws, etc..)
-
-Use like so, first get domains from tenant:
-`az rest --method GET --uri "https://graph.microsoft.com/v1.0/domains" --headers "Content-Type=application/json" --query "value[].{Name:id,IsVerified:isVerified,AuthType:authenticationType}" -o table > all_domains.txt`
-
-Results piped to all_domains.txt which we will feed into the script like so:
-
-`.\domains2ipsipv4Only.ps1 -InputPath all_domains.txt -OutputPath ips.txt`
 
 ---
 **test_shares_read_write.ps1** (Requires PowerView!)
@@ -329,6 +384,23 @@ You will see good output. YOu can get additional details by running:
 with the GUIDS produced at step 2.
 
 ---
+**lan_audit_full2.ps1**
+
+This is a great tool to uncover secrets on a LAN. Corporations unknowingly share files. Developers unknowingly leave files behind. This script will:
+1. Go over each file in the folder and subfolder
+2. If it is a spreadsheet or Word or PDF document it will open those as well
+3. It will search files for known secret values such as
+      1. AWS Access Keys
+      2. GitHub Tokens
+      3. Private Keys
+      4. Etc...a whole lot more
+
+Use like:
+`.\lan_audit_full2.ps1 "\\somedc.somedomain.net\UNCName\Any Folders" audit_report.csv`
+
+---
+## ── 📂 Section: Generic Directory ──
+---
 **Test-Feeds3.ps1**
 
 Run this script to validate network filtering, from the machine it is run on.
@@ -345,28 +417,3 @@ IPsum is a threat intelligence feed based on 30+ different publicly available li
 Run this from where we have some "security filtering" in place and get a good idea if the machine is protected! Enjoy!
  
 (Run with -Quick to just do 25 lines)
-
----
-**lan_audit_full2.ps1**
-
-This is a great tool to uncover secrets on a LAN. Corporations unknowingly share files. Developers unknowingly leave files behind. This script will:
-1. Go over each file in the folder and subfolder
-2. If it is a spreadsheet or Word or PDF document it will open those as well
-3. It will search files for known secret values such as
-      1. AWS Access Keys
-      2. GitHub Tokens
-      3. Private Keys
-      4. Etc...a whole lot more
-
-Use like:
-`.\lan_audit_full2.ps1 "\\somedc.somedomain.net\UNCName\Any Folders" audit_report.csv`
-
----
-**enum_entra_admins.ps1 & find_disabled_ad_accounts.ps1**
-
-enum_entra_admins.ps1 will look at Entra groups with "administrator" as a display name. 
-Then it will try to find users of that group, and output data to AdminLikeAccounts_Report.csv
-
-find_disabled_ad_accounts.ps1 will read that input file AdminLikeAccounts_Report.csv and try to determine if any of these admins is "disabled".
-It will produce a spreadsheet file named DisabledAccounts_Report.csv
-Admins should investigate these files and clean up their AD/AAD as needed.
