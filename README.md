@@ -112,6 +112,7 @@ Use like so:
 Microsoft Graph Command Line Tools must be granted. If not you will be prompted like so:
 
 <img src="Azure%20Active%20Directory/docs/Screenshot%202025-07-30%20135129.png" alt="Not enough permissions" width="300" height="500"/>
+
 ---
 ### `grant_consent_MSGraph.ps1` (Must be granted access to MS Graph!)
 
@@ -161,20 +162,17 @@ Admins should investigate these files and clean up their AD/AAD as needed.
 - **Use Case:** Provides a broad **inventory baseline** of all apps.  
 - **Frequency:** Run **monthly or quarterly** as part of regular inventory checks.  
 
----
 ### `BulkMultiPermExploitability2.ps1`
 - **Purpose:** Bulk‑checks each app for exploitable Microsoft Graph permissions against a defined high‑risk list.  
 - **Use Case:** Ideal for **tenant‑wide risk sweeps** and permission audits.  
 - **Frequency:** Run **monthly or quarterly** alongside inventory scans.  
 
----
 ### `Profile-App.ps1`
 - **Purpose:** Profiles a single AppId in detail.  
 - **Output Includes:** Owners, credentials, delegated/app‑only permissions, assignments, and recent sign‑ins.  
 - **Use Case:** Produces a **governance‑ready profile** for documentation, incident response, or app reviews.  
 - **Frequency:** Run **ad‑hoc** during investigations, risk reviews, or onboarding/offboarding of third‑party apps.  
 
----
 ### `Audit-AppDelegationRisks.ps1`
 - **Purpose:** Focuses on delegated OAuth2 grants.  
 - **Use Case:** Flags **tenant‑wide consents** with risky scopes and resolves who can access the app.  
