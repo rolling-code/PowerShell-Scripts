@@ -18,6 +18,7 @@ PowerShell-Scripts/
 │   └── sendmail.py
 │   └── domains2ipsipv4Only.ps1
 │   └── enum_entra_admins.ps1 & find_disabled_ad_accounts.ps1
+│   └── list_all_applications2.ps1 & BulkMultiPermExploitability2.ps1 & Profile-App.ps1 & Audit-AppDelegationRisks.ps1
 ├── On-Prem Active Directory/
 │   └── ad_object_permissions3.ps1 (uses ActiveDirectory module (ADWS))
 │   └── delegated_rights.ps1 (uses ActiveDirectory module (ADWS))
