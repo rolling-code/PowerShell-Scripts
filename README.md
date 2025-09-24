@@ -191,6 +191,7 @@ Use like so:
 When you see "Problem!" this is how you dig deeper into the app details
 
 `.\Profile-App.ps1 -TargetAppId dddddd-ba25-43c7-a710-cxxxx` 
+
 `.\Audit-AppDelegationRisks.ps1 -TargetAppId dddddd-ba25-43c7-a710-cxxxx`
 
 
