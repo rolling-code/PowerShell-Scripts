@@ -153,6 +153,30 @@ function Search-SensitiveData {
 
     if (-not $Content) { return $findings }
 
+	# 1) pass|pwd|passwd|passphrase  (at least 6 chars)
+	$re1 = '\b(?:pass|pwd|passwd|passphrase)\b\s*[:=]\s*["'']?(\S{6,})["'']?'
+	if ($Content -imatch $re1) {
+	  $findings += 'Possible password (generic)'
+	}
+
+	# 2) secret|token|api_key  (at least 8 alnum/-/_. chars)
+	$re2 = '\b(?:secret|token|api[-_]key)\b\s*[:=]\s*["'']?([A-Za-z0-9\-_\.]{8,})["'']?'
+	if ($Content -imatch $re2) {
+	  $findings += 'Possible secret/token/API key'
+	}
+
+	# 3) ssh_pass|db_pass|mysql_pwd
+	$re3 = '\b(?:ssh[-_]pass|db[-_]pass|mysql[-_]pwd)\b\s*[:=]\s*["'']?(\S+)["'']?'
+	if ($Content -imatch $re3) {
+	  $findings += 'Possible service‐specific password'
+	}
+
+	# 4) Bearer tokens
+	$re4 = '\bBearer\s+([A-Za-z0-9\-_.]+)'
+	if ($Content -imatch $re4) {
+	  $findings += 'Possible Bearer token'
+	}
+
     if ($Content -match 'AKIA[0-9A-Z]{16}') { $findings += "AWS Access Key" }
     if ($Content -match 'AIza[0-9A-Za-z\-_]{35}') { $findings += "Google API Key" }
     if ($Content -match 'ghp_[A-Za-z0-9]{36}') { $findings += "GitHub Token" }
@@ -192,7 +216,10 @@ $results = New-Object System.Collections.Generic.List[object]
 $processed = 0
 $errors = 0
 
-Get-ChildItem -Path $UNCPath -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object {
+# Define patterns to skip
+$excludePatterns = '*.exe','*.msi','*.dll','*.cab','*.ico','*.gif','*.jpg','*.png','*.mst','*.zip','*.pyc','*.dtsx'
+
+Get-ChildItem -Path $UNCPath -Recurse -File -Exclude $excludePatterns  -ErrorAction SilentlyContinue | ForEach-Object {
     $filePath = $_.FullName
     $sourceType = Get-SourceType -FilePath $filePath
 
