@@ -154,9 +154,7 @@ It will produce a spreadsheet file named DisabledAccounts_Report.csv
 Admins should investigate these files and clean up their AD/AAD as needed.
 
 ---
-**list_all_applications2.ps1 & .BulkMultiPermExploitability2ps1 & `Profile-App.ps1 & Audit-AppDelegationRisks.ps1**
-
-## 📜 Scripts Overview
+**list_all_applications2.ps1 & .BulkMultiPermExploitability2ps1 & Profile-App.ps1 & Audit-AppDelegationRisks.ps1**
 
 ### `list_all_applications2.ps1`
 - **Purpose:** Enumerates every registered application and service principal in an Entra ID tenant.  
@@ -187,6 +185,7 @@ Before running the scripts, establish a Graph session with sufficient rights:
 Use like so:
 
 `.\list_all_applications2.ps1` Generates CSV files
+
 `.\BulkMultiPermExploitability.ps1 -ScopeCsvPath ScopeBreakdown.csv` This parses previously generated CSV file
 
 When you see "Problem!" this is how you dig deeper into the app details
