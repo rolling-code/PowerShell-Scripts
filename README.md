@@ -10,13 +10,13 @@ PowerShell-Scripts/
 ├── generic/
 │   └── Base64Tool.ps1
 │   └── Test-Feeds3.ps1
+│   └── domains2ipsipv4Only.ps1
 ├── Azure Active Directory/
 │   └── get_az_token.ps1
 │   └── aadinternals_audit6.ps1 (Uses AADInternals)
 │   └── get_policies.ps1
 │   └── grant_consent_MSGraph.ps1
 │   └── sendmail.py
-│   └── domains2ipsipv4Only.ps1
 │   └── enum_entra_admins.ps1 & find_disabled_ad_accounts.ps1
 │   └── list_all_applications2.ps1 & BulkMultiPermExploitability2.ps1 & Profile-App.ps1 & Audit-AppDelegationRisks.ps1
 ├── On-Prem Active Directory/
@@ -132,18 +132,6 @@ Send email impersonations, need "Mail.Send" permissions.
 
 Use like so:
 `python .\sendmail.py`
-
----
-### `domains2ipsipv4Only.ps1`
-
-Given a list of domain will provide DNS info. I use it in combination with the domains in a tenant to get info on them (is it on wix, aws, etc..)
-
-Use like so, first get domains from tenant:
-`az rest --method GET --uri "https://graph.microsoft.com/v1.0/domains" --headers "Content-Type=application/json" --query "value[].{Name:id,IsVerified:isVerified,AuthType:authenticationType}" -o table > all_domains.txt`
-
-Results piped to all_domains.txt which we will feed into the script like so:
-
-`.\domains2ipsipv4Only.ps1 -InputPath all_domains.txt -OutputPath ips.txt`
 
 ---
 ### `enum_entra_admins.ps1 & find_disabled_ad_accounts.ps1`
@@ -416,3 +404,15 @@ Use like so:
 `.\Base64Tool.ps1 -InputString 'Hello World!' -Encode`
 
 (Equivalent to `[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes('Hello World!'))`)
+
+---
+### `domains2ipsipv4Only.ps1`
+
+Given a list of domain will provide DNS info. I use it in combination with the domains in a tenant to get info on them (is it on wix, aws, etc..)
+
+Use like so, first get domains from tenant:
+`az rest --method GET --uri "https://graph.microsoft.com/v1.0/domains" --headers "Content-Type=application/json" --query "value[].{Name:id,IsVerified:isVerified,AuthType:authenticationType}" -o table > all_domains.txt`
+
+Results piped to all_domains.txt which we will feed into the script like so:
+
+`.\domains2ipsipv4Only.ps1 -InputPath all_domains.txt -OutputPath ips.txt`
