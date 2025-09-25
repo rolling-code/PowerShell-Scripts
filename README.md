@@ -17,6 +17,7 @@ PowerShell-Scripts/
 │   └── get_policies.ps1
 │   └── grant_consent_MSGraph.ps1
 │   └── sendmail.py
+│   └── Check-AllPowerfulAzurePerms3.ps1
 │   └── enum_entra_admins.ps1 & find_disabled_ad_accounts.ps1
 │   └── list_all_applications2.ps1 & BulkMultiPermExploitability2.ps1 & Profile-App.ps1 & Audit-AppDelegationRisks.ps1
 ├── On-Prem Active Directory/
@@ -60,6 +61,16 @@ Notes:
 - Contributions and suggestions are welcome!
 
 ## ── 📂 Section: Azure Active Directory ──
+---
+### `Check-AllPowerfulAzurePerms3.ps1`
+A series of insightful articles on cloud permissions was recently published by Sonrai Security:
+https://sonraisecurity.com/blog/powerful-cloud-permissions-you-should-know-part-1/
+
+I gathered all the Azure permissions they highlighted and wrote a PowerShell script to validate them in my environment. Automating these checks enables the operations team to:
+- Validate issues consistently
+- Reproduce findings on demand
+- Schedule regular cybersecurity health assessments
+
 ---
 ### `get_az_token.ps1`
 
