@@ -20,6 +20,7 @@ PowerShell-Scripts/
 │   └── Check-AllPowerfulAzurePerms3.ps1
 │   └── enum_entra_admins.ps1 & find_disabled_ad_accounts.ps1
 │   └── list_all_applications2.ps1 & BulkMultiPermExploitability2.ps1 & Profile-App.ps1 & Audit-AppDelegationRisks.ps1
+│   └── Audit-AllUsersRolePerms.ps1
 ├── On-Prem Active Directory/
 │   └── ad_object_permissions3.ps1 (uses ActiveDirectory module (ADWS))
 │   └── delegated_rights.ps1 (uses ActiveDirectory module (ADWS))
@@ -192,7 +193,14 @@ When you see "Problem!" this is how you dig deeper into the app details
 
 `.\Audit-AppDelegationRisks.ps1 -TargetAppId dddddd-ba25-43c7-a710-cxxxx`
 
+---
+### `Audit-AllUsersRolePerms.ps1`
 
+Tenant-wide audit of default user role permissions, privileged directory roles,  and high-privilege Azure RBAC assignments—highlighting only users who exceed the locked-down defaults.
+Must have Graph API permissions Policy.Read.All to use this script
+
+Use like so:
+`.\Audit-AllUsersRolePerms.ps1`
 
 ## ── 📂 Section: On-Prem Active Directory ──
 ---
