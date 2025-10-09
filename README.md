@@ -391,7 +391,6 @@ This is a great tool to uncover secrets on a LAN. Corporations unknowingly share
 Use like:
 `.\lan_audit_full2.ps1 "\\somedc.somedomain.net\UNCName\Any Folders" audit_report.csv`
 
----
 ## ── 📂 Section: Generic Directory ──
 ---
 ### `Test-Feeds3.ps1`
