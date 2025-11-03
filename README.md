@@ -42,6 +42,8 @@ PowerShell-Scripts/
 │   └── test_shares_read_write.ps1
 │   └── analyze_gpo3.ps1 (imports modules: GroupPolicy)
 │   └── lan_audit_full2.ps1
+│   └── CheckWritableAttributesADUsers.py (Python, PowerShell version is below)
+│   └── CheckWritableAttributesADUsers.ps1 (is the PowerShell equivalent of Python file above)
 └── README.md
 ```
 
@@ -434,3 +436,29 @@ Use like so, first get domains from tenant:
 Results piped to all_domains.txt which we will feed into the script like so:
 
 `.\domains2ipsipv4Only.ps1 -InputPath all_domains.txt -OutputPath ips.txt`
+
+---
+### `CheckWritableAttributesADUsers.py|.ps1`
+
+The Python svcript uses strictly LDAP3 to enumerate the AD users (use the -dc-ip parameter to specify your Domain Controller IP).
+Then it will attempt to write "temp" to attributes to determine if any is writeable.
+Although not the most elegent solution - it works! It will write a users.cvs file, which should only contain your own AD account-any others are worhty of ivestigation!
+Use like so:
+
+`python3 CheckWritableAttributesADUsers.py DOMAIN/mcontestabile:'XXX' -dc-ip 1.2.3.4`
+
+The PowerShell version does the same thing - but with a twist.
+Firstly, it will try to use ADWS first before falling back to LDAP.
+Secondly, it also produces a ADUsers.csv output file but it contains the "WriteableAttributes" for each user. 
+Users with excessive permissions will stand out!
+
+Use with parameters and it will use your current Windows account. You can specify like so:
+`-Dc 1.2.0.10 -Out investigate_UsersPS.csv`
+
+or specify other creds like so:
+`$cred = Get-Credential domain\otheruser
+.\CheckWritableAttributesADUsers.ps1 -Credential $cred`
+
+Use `-PageSize 200` for large directories.
+
+
