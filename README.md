@@ -359,7 +359,7 @@ Good targets to examine further on your AD are those shares shown as "DISK" and 
 ---
 ### `analyze_gpo3.ps1`
 
-Tries get gather info on the GPO's pushed to your machuine.
+Gathers info on the GPO's pushed to your machine.
 Loads the GPResult XML from disk
 Gets GUIDS
 For each extracted GUID, Builds the folder name, if found, scans subfolders for
@@ -374,7 +374,7 @@ Step 1: Run `gpresult /x C:\Temp\gpresult.xml /SCOPE COMPUTER`
 
 Step 2: Run `.\analyze_gpo3.ps1 -GPResultXml C:\Temp\gpresult.xml -SysvolRoot "\\your.domain.here\SYSVOL\domain.net\Policies"`
 
-You will see good output. YOu can get additional details by running:
+You will see good output. You can get additional details by running:
 
 `Get-GPOReport -Id XXX -ReportType XML`
 
