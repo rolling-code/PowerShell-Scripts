@@ -470,12 +470,12 @@ Disables Windows Defender Services. Need to run as admin.
 
 If you want to automatically do so after every reboot & login event, run this PowerSHell to create a Scheduled Task which will run that .ps1 for you under SYSTEM.
 
-`$Action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\Users\mcontestabile\DisableWindowsDefender.ps1"'
-$Triggers = @(
-  New-ScheduledTaskTrigger -AtStartup
-  New-ScheduledTaskTrigger -AtLogOn
-)
-$Principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -RunLevel Highest
-Register-ScheduledTask -TaskName "Git-PostLogonScript" -Action $Action -Trigger $Triggers -Principal $Principal -Description "Run post-logon script elevated"`
+`$Action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\Users\mcontestabile\DisableWindowsDefender.ps1"'`
+`$Triggers = @(`
+`  New-ScheduledTaskTrigger -AtStartup`
+`  New-ScheduledTaskTrigger -AtLogOn`
+`)`
+`$Principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -RunLevel Highest`
+`Register-ScheduledTask -TaskName "Git-PostLogonScript" -Action $Action -Trigger $Triggers -Principal $Principal -Description "Run post-logon script elevated"``
 
 
