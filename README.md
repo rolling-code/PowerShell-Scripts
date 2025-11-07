@@ -1,7 +1,7 @@
 
 PowerShell-Scripts
 
-A collection of PowerShell scripts for various administrative tasks, including Azure Active Directory and On-Prem Active Directory management.
+A collection of PowerShell scripts (And some Python 🐍 as well) for various administrative tasks, including Azure Active Directory and On-Prem Active Directory management.
 
 Folder Structure:
 
