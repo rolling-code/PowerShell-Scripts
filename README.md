@@ -371,6 +371,7 @@ For each extracted GUID, Builds the folder name, if found, scans subfolders for
  - Build Consolidated Output Object
 
 Step 1: Run `gpresult /x C:\Temp\gpresult.xml /SCOPE COMPUTER`
+
 Step 2: Run `.\analyze_gpo3.ps1 -GPResultXml C:\Temp\gpresult.xml -SysvolRoot "\\your.domain.here\SYSVOL\domain.net\Policies"`
 
 You will see good output. YOu can get additional details by running:
