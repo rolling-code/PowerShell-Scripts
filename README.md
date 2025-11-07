@@ -11,6 +11,7 @@ PowerShell-Scripts/
 │   └── Base64Tool.ps1
 │   └── Test-Feeds3.ps1
 │   └── domains2ipsipv4Only.ps1
+│   └── DisableWindowsDefender.ps1
 ├── Azure Active Directory/
 │   └── get_az_token.ps1
 │   └── aadinternals_audit6.ps1 (Uses AADInternals)
@@ -52,10 +53,10 @@ Usage:
 1. Clone the repository:
    git clone https://github.com/rolling-code/PowerShell-Scripts.git
 
-2. Navigate to the desired folder:
+2. Navigate to the desired folder, eg:
    cd "PowerShell-Scripts/Azure Active Directory"
 
-3. Run the script using PowerShell:
+3. Run the script using PowerShell, or Python eg:
    .\get_az_token.ps1
 
 Notes:
@@ -393,6 +394,31 @@ This is a great tool to uncover secrets on a LAN. Corporations unknowingly share
 Use like:
 `.\lan_audit_full2.ps1 "\\somedc.somedomain.net\UNCName\Any Folders" audit_report.csv`
 
+---
+### `CheckWritableAttributesADUsers.py|.ps1`
+
+The Python svcript uses strictly LDAP3 to enumerate the AD users (use the -dc-ip parameter to specify your Domain Controller IP).
+Then it will attempt to write "temp" to attributes to determine if any is writeable.
+Although not the most elegent solution - it works! It will write a users.cvs file, which should only contain your own AD account-any others are worhty of ivestigation!
+Use like so:
+
+`python3 CheckWritableAttributesADUsers.py DOMAIN/mcontestabile:'XXX' -dc-ip 1.2.3.4`
+
+The PowerShell version does the same thing - but with a twist.
+Firstly, it will try to use ADWS first before falling back to LDAP.
+Secondly, it also produces a ADUsers.csv output file but it contains the "WriteableAttributes" for each user. 
+Users with excessive permissions will stand out!
+
+Use with parameters and it will use your current Windows account. You can specify like so:
+`-Dc 1.2.0.10 -Out investigate_UsersPS.csv`
+
+or specify other creds like so:
+
+`$cred = Get-Credential domain\otheruser
+.\CheckWritableAttributesADUsers.ps1 -Credential $cred`
+
+Use `-PageSize 200` for large directories.
+
 ## ── 📂 Section: Generic Directory ──
 ---
 ### `Test-Feeds3.ps1`
@@ -438,27 +464,18 @@ Results piped to all_domains.txt which we will feed into the script like so:
 `.\domains2ipsipv4Only.ps1 -InputPath all_domains.txt -OutputPath ips.txt`
 
 ---
-### `CheckWritableAttributesADUsers.py|.ps1`
+### `DisableWindowsDefender.ps1`
 
-The Python svcript uses strictly LDAP3 to enumerate the AD users (use the -dc-ip parameter to specify your Domain Controller IP).
-Then it will attempt to write "temp" to attributes to determine if any is writeable.
-Although not the most elegent solution - it works! It will write a users.cvs file, which should only contain your own AD account-any others are worhty of ivestigation!
-Use like so:
+Disables Windows Defender Services. Need to run as admin.
 
-`python3 CheckWritableAttributesADUsers.py DOMAIN/mcontestabile:'XXX' -dc-ip 1.2.3.4`
+If you want to automatically do so after every reboot & login event, run this PowerSHell to create a Scheduled Task which will run that .ps1 for you under SYSTEM.
 
-The PowerShell version does the same thing - but with a twist.
-Firstly, it will try to use ADWS first before falling back to LDAP.
-Secondly, it also produces a ADUsers.csv output file but it contains the "WriteableAttributes" for each user. 
-Users with excessive permissions will stand out!
-
-Use with parameters and it will use your current Windows account. You can specify like so:
-`-Dc 1.2.0.10 -Out investigate_UsersPS.csv`
-
-or specify other creds like so:
-`$cred = Get-Credential domain\otheruser
-.\CheckWritableAttributesADUsers.ps1 -Credential $cred`
-
-Use `-PageSize 200` for large directories.
+`$Action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\Users\mcontestabile\DisableWindowsDefender.ps1"'
+$Triggers = @(
+  New-ScheduledTaskTrigger -AtStartup
+  New-ScheduledTaskTrigger -AtLogOn
+)
+$Principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -RunLevel Highest
+Register-ScheduledTask -TaskName "Git-PostLogonScript" -Action $Action -Trigger $Triggers -Principal $Principal -Description "Run post-logon script elevated"`
 
 
