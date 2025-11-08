@@ -124,7 +124,7 @@ Function Start-MyCommands {
 		}
 	}else{
 		# Any other PowerShell version
-		Write-Host "⚡Running PowerShell $($pv.ToString()) — using fallback path - not loading PowerSploit" -ForegroundColor Yellow
+		# Write-Host "⚡Running PowerShell $($pv.ToString()) — using fallback path - not loading PowerSploit" -ForegroundColor Yellow
 		# place fallback code here
 	}
 
@@ -156,3 +156,4 @@ Function Start-MyCommands {
 Start-MyCommands
 
 Get-Module -Name AADInternals, AADInternals-Endpoints, DSInternals, ActiveDirectory, PSPreworkout, PSReflect, PowerView -ErrorAction SilentlyContinue
+
