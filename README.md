@@ -12,6 +12,7 @@ PowerShell-Scripts/
 │   └── Test-Feeds3.ps1
 │   └── domains2ipsipv4Only.ps1
 │   └── DisableWindowsDefender.ps1
+│   └── kickoff.ps1
 ├── Azure Active Directory/
 │   └── get_az_token.ps1
 │   └── aadinternals_audit6.ps1 (Uses AADInternals)
@@ -58,6 +59,9 @@ Usage:
 
 3. Run the script using PowerShell, or Python eg:
    .\get_az_token.ps1
+
+You may need modules to be loaded for some scripts to run properly. No worries I got you.
+Run the script kickoff.ps1 to configure your powershell with all the necessary prerequisites.
 
 Notes:
 
