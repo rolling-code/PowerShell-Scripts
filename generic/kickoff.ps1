@@ -1,4 +1,4 @@
-﻿Set-Location "C:\Users\mcontestabile\blahblah"
+Set-Location "C:\Users\mcontestabile\foo"
 
 # Determine PSVersion once
 $pv = $PSVersionTable.PSVersion
@@ -21,12 +21,14 @@ Function Start-MyCommands {
     try {
         Install-Module -Name PowerShellGet -Force -Scope CurrentUser -ErrorAction Stop
     } catch {
-        Write-Verbose "⚡PowerShellGet update skipped: $($_.Exception.Message)" -ForegroundColor Green 
+        #Write-Verbose "⚡PowerShellGet update skipped: $($_.Exception.Message)" -ForegroundColor Green 
+		Write-Host ("⚡PowerShellGet update skipped: {0}" -f $_.Exception.Message) -ForegroundColor Green
     }
     try {
         Install-Module -Name PackageManagement -Force -Scope CurrentUser -ErrorAction Stop
     } catch {
-        Write-Verbose "⚡PackageManagement update skipped: $($_.Exception.Message)" -ForegroundColor Yellow 
+        #Write-Verbose "⚡PackageManagement update skipped: $($_.Exception.Message)" -ForegroundColor Yellow
+		Write-Host ("⚡PackageManagement update skipped: {0}" -f $_.Exception.Message) -ForegroundColor Yellow
     }
 
     Write-Host "⚡Ensuring AADInternals and AADInternals-Endpoints present and up to date..." -ForegroundColor Green
@@ -47,6 +49,15 @@ Function Start-MyCommands {
 		}
 		Import-Module -Name $m -ErrorAction Stop
     }
+	# install the AD GUI+tools capability (includes ADUC)
+	Add-WindowsCapability -Online -Name Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0
+
+	# install the AD PowerShell module (if separate on your build)
+	Add-WindowsCapability -Online -Name Rsat.AD.PowerShell~~~~0.0.1.0
+
+	# load the module into the current session
+	Import-Module ActiveDirectory
+
 
     Write-Host "⚡Listing Active Directory Module part of RSAT..." -ForegroundColor Green
     Get-Module ActiveDirectory -ListAvailable
@@ -98,7 +109,8 @@ Function Start-MyCommands {
 			Import-Module -Name $psReflectPath -ErrorAction Stop
 			Write-Host "⚡PSReflect loaded from $psReflectPath" -ForegroundColor Green
 		} else {
-			Write-Warning "⚡PSReflect module not found at $psReflectPath" -ForegroundColor Yellow
+			#Write-Warning "⚡PSReflect module not found at $psReflectPath" -ForegroundColor Yellow
+			Write-Host ("⚡PSReflect module not found at: {0}" -f $psReflectPath) -ForegroundColor Yellow
 		}
 
 		#Import PowerView script by full path(dot - source.ps1 or Import-Module only for psm1 / dll)
@@ -107,7 +119,8 @@ Function Start-MyCommands {
 			.$powerViewPath #dot - source a script to import functions into session 
 			Write-Host "⚡PowerView dot-sourced from $powerViewPath" -ForegroundColor Green
 		} else {
-			Write-Warning "⚡PowerView not found at $powerViewPath" -ForegroundColor Yellow
+			#Write-Warning "⚡PowerView not found at $powerViewPath" -ForegroundColor Yellow
+			Write-Host ("⚡PowerView module not found at: {0}" -f $powerViewPath) -ForegroundColor Yellow
 		}
 	}else{
 		# Any other PowerShell version
