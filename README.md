@@ -339,13 +339,12 @@ Use like so:
 `.\setNoPreauth.ps1 "LDAP://CN=Mario Contestabile,OU=blahblah,OU=bloop,DC=xxx,DC=yyy"`
 
 ---
-### `AD_Audit_Script.ps1`
+### `AD_Audit_Script.ps1` (Requires PowerSploit! Ergo better to use in PowerShell 5.1 (just run powershell.exe -Version 5.1).)
 
-This uses PowerSploit. Ergo better to use in PowerShell 5.1 (just run powershell.exe -Version 5.1).
 Creates a report file for you.
 
 ---
-### `GpoAclAudit.ps1` (Requires PowerSploit!)
+### `GpoAclAudit.ps1` (Requires PowerSploit! Ergo better to use in PowerShell 5.1 (just run powershell.exe -Version 5.1).)
 
 Audit powerful rights over GPOs. Inactive accounts are shown in red.
 
