@@ -59,7 +59,7 @@ Usage:
    and run ./kickoff.ps1
    - This script will setup many necessary modules.
    - This script will update these modules if you choose to do so.
-   - This script will setup PowerSploit for you if run under PowerShell 5.1 (git clone tht repo as shown above) 
+   - This script will setup PowerSploit for you if run under PowerShell 5.1 (git clone that repo as shown above) 
 
 3. Navigate to the desired folder, eg:
    cd "PowerShell-Scripts/Azure Active Directory"
