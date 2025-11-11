@@ -345,7 +345,7 @@ This uses PowerSploit. Ergo better to use in PowerShell 5.1 (just run powershell
 Creates a report file for you.
 
 ---
-### `GpoAclAudit.ps1` (Requires PowerView!)
+### `GpoAclAudit.ps1` (Requires PowerSploit!)
 
 Audit powerful rights over GPOs. Inactive accounts are shown in red.
 
@@ -358,9 +358,9 @@ Use like so:
 Will generate a spreadsheet (AD-UserComputer-Audit.csv) for all users in your AD with computer they manage.
 
 ---
-### `test_shares_read_write.ps1` (Requires PowerView!)
+### `test_shares_read_write.ps1` 
 
-Given the output from:
+Given the output from the PowerSploit:
 `Invoke-ShareFinder | Export-Csv .\shared_folders.csv -NoTypeInformation`
 
 This script will read the file "shared_folders.csv" and generate "ShareSecurityReport.csv".
