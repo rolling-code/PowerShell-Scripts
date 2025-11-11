@@ -13,6 +13,7 @@ PowerShell-Scripts/
 │   └── domains2ipsipv4Only.ps1
 │   └── DisableWindowsDefender.ps1
 │   └── kickoff.ps1
+│   └── SetAdaptorMetricWired_Highest.ps1
 ├── Azure Active Directory/
 │   └── get_az_token.ps1
 │   └── aadinternals_audit6.ps1 (Uses AADInternals)
@@ -53,11 +54,17 @@ Usage:
 
 1. Clone the repository:
    git clone https://github.com/rolling-code/PowerShell-Scripts.git
+   I recommend professional pen testers also:
+   git clone https://github.com/PowerShellMafia/PowerSploit.git
+   and run ./kickoff.ps1
+   - This script will setup many necessary modules.
+   - This script will update these modules if you choose to do so.
+   - This script will setup PowerSploit for you if run under PowerShell 5.1 (git clone tht repo as shown above) 
 
-2. Navigate to the desired folder, eg:
+3. Navigate to the desired folder, eg:
    cd "PowerShell-Scripts/Azure Active Directory"
 
-3. Run the script using PowerShell, or Python eg:
+4. Run the script using PowerShell, or Python eg:
    .\get_az_token.ps1
 
 You may need modules to be loaded for some scripts to run properly. No worries I got you.
@@ -484,3 +491,13 @@ $Principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -RunLevel Highest
 Register-ScheduledTask -TaskName "Git-PostLogonScript" -Action $Action -Trigger $Triggers -Principal $Principal -Description "Run post-logon script elevated"
 ```
 
+---
+### `SetAdaptorMetricWired_Highest.ps1`
+
+Set interface metrics for physical adapters only.
+- Disconnected physical adapters => metric 100
+- Connected physical adapters => metric 10 (except when both wired+wifi are Up: wired=10, wifi=50) Like the name says, prefer wired over wifi
+- Use -Trial to preview planned changes without applying them
+
+Use like so to see what changes it will perform without applying them:
+`.\SetAdaptorMetricWired_Highest.ps1 -Trial`
