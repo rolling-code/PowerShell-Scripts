@@ -1,0 +1,40 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Security Awareness Simulation – Consent Phishing</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: Segoe UI, Arial, sans-serif; background:#0F172A; color:#F9FAFB; margin:0; }
+    .container { max-width: 800px; margin: 40px auto; background:#1E293B; padding:30px; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.4); }
+    h1 { color:#38BDF8; margin-top:0; }
+    p { line-height:1.6; font-size:18px; }
+    .alert { background:#F87171; color:#0F172A; padding:12px; border-radius:8px; font-weight:700; margin:20px 0; }
+    ul { padding-left:20px; }
+    li { margin-bottom:8px; }
+    code { background:#0B1020; padding:2px 6px; border-radius:6px; }
+    footer { text-align:center; color:#94A3B8; font-size:14px; margin-top:40px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Consent Phishing Simulation</h1>
+    <div class="alert">⚠️ This was a simulation – no credentials were captured.</div>
+    <p>You interacted with a multi-tenant application that requested access via Microsoft’s real sign-in page.</p>
+    <h2>What this demonstrates</h2>
+    <ul>
+      <li>Attackers register apps in their own tenant and make them <strong>multi-tenant</strong>.</li>
+      <li>They ask for dangerous permissions like <code>Mail.Read</code>, <code>Files.Read</code>, and <code>offline_access</code>.</li>
+      <li>If consent is granted, attackers can access data and <strong>persist</strong> using refresh tokens until consent is revoked.</li>
+    </ul>
+    <h2>How to protect yourself</h2>
+    <ul>
+      <li>Verify the <strong>publisher</strong> and look for <strong>verified publisher</strong> badges.</li>
+      <li>Scrutinize the <strong>permissions</strong> and ask: do they match the task?</li>
+      <li>If uncertain, <strong>cancel</strong> and report to IT Security.</li>
+    </ul>
+  </div>
+  <footer>© 2025 Security Awareness Program | Controlled simulation for training purposes.</footer>
+</body>
+</html>
