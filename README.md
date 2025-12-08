@@ -28,6 +28,11 @@ PowerShell-Scripts/
         Profile-App.ps1
         Audit-AppDelegationRisks.ps1
 │   └── Audit-AllUsersRolePerms.ps1
+│   └── ** automate creation of malicious-looking OAuth authorization flows (device‑code and consent URLs) used in consent‑phishing simulations **
+│   generate_oauth_phishing_url_pwnd2.ps1
+│   generate_oauth_phishing_url_MS_App2.ps1
+│   generate_oauth_phishing_url2.ps1
+
 ## ── 📂 ├── On-Prem Active Directory/
 │   └── ad_object_permissions3.ps1 (uses ActiveDirectory module (ADWS))
 │   └── delegated_rights.ps1 (uses ActiveDirectory module (ADWS))
@@ -219,6 +224,21 @@ Must have Graph API permissions Policy.Read.All to use this script
 
 Use like so:
 `.\Audit-AllUsersRolePerms.ps1`
+
+---
+### `generate_oauth_phishing_url_pwnd2.ps1`
+
+Produces preconfigured phishing payloads and tracking for “pwnd” style scenarios where the script automates the device‑code flow lifecycle (create code, deliver to victim, poll for token).
+
+---
+### `generate_oauth_phishing_url_MS_App2.ps1`
+
+Builds phishing URLs that impersonate or reuse Microsoft‑branded client IDs and scopes to make the consent prompt appear legitimate.
+
+---
+### `generate_oauth_phishing_url2.ps1`
+
+Generates OAuth device‑code or authorization URLs and associated tracking artifacts that an attacker could deliver to a target to induce them to approve an OAuth consent prompt.
 
 ## ── 📂 Section: On-Prem Active Directory ──
 ---
