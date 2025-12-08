@@ -22,7 +22,11 @@ PowerShell-Scripts/
 │   └── sendmail.py
 │   └── Check-AllPowerfulAzurePerms3.ps1
 │   └── enum_entra_admins.ps1 & find_disabled_ad_accounts.ps1
-│   └── list_all_applications2.ps1 & BulkMultiPermExploitability2.ps1 & Profile-App.ps1 & Audit-AppDelegationRisks.ps1
+│   └── ** Azure AD application auditing tools **
+        list_all_applications2.ps1
+        BulkMultiPermExploitability2.ps1
+        Profile-App.ps1
+        Audit-AppDelegationRisks.ps1
 │   └── Audit-AllUsersRolePerms.ps1
 ├── On-Prem Active Directory/
 │   └── ad_object_permissions3.ps1 (uses ActiveDirectory module (ADWS))
@@ -189,7 +193,7 @@ Admins should investigate these files and clean up their AD/AAD as needed.
 - **Frequency:** Run **ad‑hoc** during investigations, risk reviews, or onboarding/offboarding of third‑party apps.  
 
 ### `Audit-AppDelegationRisks.ps1`
-- **Purpose:** Focuses on delegated OAuth2 grants.  
+- **Purpose:** Focuses on delegated OAuth2 grants. Profiles a single service principal to audit delegated permission grants and identify high‑risk delegated scopes (e.g., mail, calendars, device management).
 - **Use Case:** Flags **tenant‑wide consents** with risky scopes and resolves who can access the app.  
 - **Frequency:** Run **ad‑hoc** when reviewing suspicious or high‑risk apps.  
 
