@@ -29,9 +29,9 @@ PowerShell-Scripts/
         Audit-AppDelegationRisks.ps1
 │   └── Audit-AllUsersRolePerms.ps1
 │   └── ** automate creation of malicious-looking OAuth authorization flows (device‑code and consent URLs) used in consent‑phishing simulations **
-│   generate_oauth_phishing_url_pwnd2.ps1
-│   generate_oauth_phishing_url_MS_App2.ps1
-│   generate_oauth_phishing_url2.ps1
+│       generate_oauth_phishing_url_pwnd2.ps1
+│       generate_oauth_phishing_url_MS_App2.ps1
+│       generate_oauth_phishing_url2.ps1
 
 ## ── 📂 ├── On-Prem Active Directory/
 │   └── ad_object_permissions3.ps1 (uses ActiveDirectory module (ADWS))
