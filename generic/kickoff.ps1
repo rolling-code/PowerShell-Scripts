@@ -1,4 +1,4 @@
-Set-Location "C:\Users\mcontestabile\foo"
+Set-Location "C:\Users\mcontestabile\OneDrive - American Iron and Metal\Desktop"
 
 # Determine PSVersion once
 $pv = $PSVersionTable.PSVersion
@@ -9,7 +9,7 @@ Function Start-MyCommands {
 
     Write-Host "⚡Executing startup tasks..." -ForegroundColor Green
     #Ensure PSGallery exists and is trusted
-    if (-not(Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue)) {
+    if (-not(Get-PSRepository -Name PSGallery -ErrorAction Continue)) {
         Register-PSRepository -Name PSGallery -SourceLocation 'https://www.powershellgallery.com/api/v2' -InstallationPolicy Trusted
     } else {
         Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
@@ -19,13 +19,13 @@ Function Start-MyCommands {
 
     #Update PowerShellGet / PackageManagement to avoid missing parameter issues
     try {
-        Install-Module -Name PowerShellGet -Force -Scope CurrentUser -ErrorAction Stop
+        Install-Module -Name PowerShellGet -Force -Scope CurrentUser -ErrorAction Continue
     } catch {
         #Write-Verbose "⚡PowerShellGet update skipped: $($_.Exception.Message)" -ForegroundColor Green 
 		Write-Host ("⚡PowerShellGet update skipped: {0}" -f $_.Exception.Message) -ForegroundColor Green
     }
     try {
-        Install-Module -Name PackageManagement -Force -Scope CurrentUser -ErrorAction Stop
+        Install-Module -Name PackageManagement -Force -Scope CurrentUser -ErrorAction Continue
     } catch {
         #Write-Verbose "⚡PackageManagement update skipped: $($_.Exception.Message)" -ForegroundColor Yellow
 		Write-Host ("⚡PackageManagement update skipped: {0}" -f $_.Exception.Message) -ForegroundColor Yellow
@@ -34,20 +34,20 @@ Function Start-MyCommands {
     Write-Host "⚡Ensuring AADInternals and AADInternals-Endpoints present and up to date..." -ForegroundColor Green
     $modules =  @('AADInternals', 'AADInternals-Endpoints')
 	foreach($m in $modules) {
-		$installed = Get-InstalledModule -Name $m -ErrorAction SilentlyContinue
+		$installed = Get-InstalledModule -Name $m -ErrorAction Continue
 		if (-not $installed) {
 			Write-Host "⚡Installing $m" -ForegroundColor Green
-			Install-Module -Name $m -Scope CurrentUser -Force -ErrorAction Stop
+			Install-Module -Name $m -Scope CurrentUser -Force -ErrorAction Continue
 		} else {
-			$remote = Find-Module -Name $m -ErrorAction SilentlyContinue
+			$remote = Find-Module -Name $m -ErrorAction Continue
 			if ($remote -and ($remote.Version -gt $installed.Version)) {
 				Write-Host "⚡Updating $m (local $($installed.Version) -> remote $($remote.Version))" -ForegroundColor Green
-				Update-Module -Name $m -Force -ErrorAction Stop
+				Update-Module -Name $m -Force -ErrorAction Continue
 			} else {
 				Write-Host "⚡$m is up to date" -ForegroundColor Green
 			}
 		}
-		Import-Module -Name $m -ErrorAction Stop
+		Import-Module -Name $m -ErrorAction Continue
     }
 	# install the AD GUI+tools capability (includes ADUC)
 	Add-WindowsCapability -Online -Name Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0
@@ -69,13 +69,13 @@ Function Start-MyCommands {
     Start-Sleep -Seconds 2
 
     Write-Host "⚡Installing or updating DSInternals..." -ForegroundColor Green
-    if (-not(Get-InstalledModule -Name DSInternals -ErrorAction SilentlyContinue)) {
-        Install-Module -Name DSInternals -Scope CurrentUser -Force -ErrorAction Stop
+    if (-not(Get-InstalledModule -Name DSInternals -ErrorAction Continue)) {
+        Install-Module -Name DSInternals -Scope CurrentUser -Force -ErrorAction Continue
     } else {
         $local = Get-InstalledModule -Name DSInternals
-        $remote = Find-Module -Name DSInternals -ErrorAction SilentlyContinue
+        $remote = Find-Module -Name DSInternals -ErrorAction Continue
         if ($remote -and($remote.Version -gt $local.Version)) {
-            Update-Module -Name DSInternals -Force -ErrorAction Stop
+            Update-Module -Name DSInternals -Force -ErrorAction Continue
         }
     }
     #Wait for availability with timeout
@@ -89,7 +89,7 @@ Function Start-MyCommands {
     if ($elapsed -ge $timeout) {
         Write-Warning "⚡Timeout waiting for DSInternals module" -ForegroundColor Yellow
     }
-    Import-Module -Name DSInternals -ErrorAction SilentlyContinue
+    Import-Module -Name DSInternals -ErrorAction Continue
 		
 	if ($pv.Major -ge 7) {
 		# PowerShell 7 or later
@@ -106,7 +106,7 @@ Function Start-MyCommands {
 		}
 		$psReflectPath = Join-Path -Path $scriptRoot -ChildPath 'PSReflect\PSReflect.psm1'
 		if (Test-Path $psReflectPath) {
-			Import-Module -Name $psReflectPath -ErrorAction Stop
+			Import-Module -Name $psReflectPath -ErrorAction Continue
 			Write-Host "⚡PSReflect loaded from $psReflectPath" -ForegroundColor Green
 		} else {
 			#Write-Warning "⚡PSReflect module not found at $psReflectPath" -ForegroundColor Yellow
@@ -139,21 +139,28 @@ Function Start-MyCommands {
 		Get-InstalledModule | ForEach-Object {
 			$name = $_.Name
 			try {
-				Update-Module -Name $name -Force -ErrorAction Stop
+				Update-Module -Name $name -Force -ErrorAction Continue
 				Write-Host "⚡Updated $name" -ForegroundColor Green
 			} catch {
 				Write-Host ("⚡Failed {0}: {1}" -f $name, $_.Exception.Message) -ForegroundColor Yellow
 			}
 		}
 	}
+	
+	Write-Host "⚡Installing Azure Automation CLI extension" -ForegroundColor Green
+	az extension add -n automation
+	
+	Write-Host "⚡Enables automatic, silent installation of missing CLI extensions when you run a command for the first time" -ForegroundColor Green
+	az config set extension.use_dynamic_install=yes_without_prompt
 
     Write-Host "⚡PowerView Runs much better in an older PS - RUN the following..." -ForegroundColor Green
     Write-Host "⚡powershell.exe -Version 5.1" -ForegroundColor Green
     Write-Host "⚡.\kickoff.ps1" -ForegroundColor Green
 	Write-Host "⚡ PowerSploit\Recon> . .\PowerView.ps1" -ForegroundColor Green
+	
+	Get-AzContext
 
 }
 Start-MyCommands
 
 Get-Module -Name AADInternals, AADInternals-Endpoints, DSInternals, ActiveDirectory, PSPreworkout, PSReflect, PowerView -ErrorAction SilentlyContinue
-
