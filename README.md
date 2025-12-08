@@ -7,14 +7,14 @@ Folder Structure:
 
 ```
 PowerShell-Scripts/
-├── generic/
+## ── 📂 ├── generic/
 │   └── Base64Tool.ps1
 │   └── Test-Feeds3.ps1
 │   └── domains2ipsipv4Only.ps1
 │   └── DisableWindowsDefender.ps1
 │   └── kickoff.ps1
 │   └── SetAdaptorMetricWired_Highest.ps1
-├── Azure Active Directory/
+## ── 📂 ├── Azure Active Directory/
 │   └── get_az_token.ps1
 │   └── aadinternals_audit6.ps1 (Uses AADInternals)
 │   └── get_policies.ps1
@@ -28,7 +28,7 @@ PowerShell-Scripts/
         Profile-App.ps1
         Audit-AppDelegationRisks.ps1
 │   └── Audit-AllUsersRolePerms.ps1
-├── On-Prem Active Directory/
+## ── 📂 ├── On-Prem Active Directory/
 │   └── ad_object_permissions3.ps1 (uses ActiveDirectory module (ADWS))
 │   └── delegated_rights.ps1 (uses ActiveDirectory module (ADWS))
 │   └── servers_get_smb.ps1 (uses ActiveDirectory module (ADWS))
