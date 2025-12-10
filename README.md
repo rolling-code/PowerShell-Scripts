@@ -14,6 +14,7 @@ PowerShell-Scripts/
 │   └── DisableWindowsDefender.ps1
 │   └── kickoff.ps1
 │   └── SetAdaptorMetricWired_Highest.ps1
+
 ## ── 📂 ├── Azure Active Directory/
 │   └── get_az_token.ps1
 │   └── aadinternals_audit6.ps1 (Uses AADInternals)
@@ -22,13 +23,14 @@ PowerShell-Scripts/
 │   └── sendmail.py
 │   └── Check-AllPowerfulAzurePerms3.ps1
 │   └── enum_entra_admins.ps1 & find_disabled_ad_accounts.ps1
-│   └── ** Azure AD application auditing tools **
+│   └── watch_X_job3.ps1
+│   └── Audit-AllUsersRolePerms.ps1
+│   └── 👉** Azure AD application auditing tools **
         list_all_applications2.ps1
         BulkMultiPermExploitability2.ps1
         Profile-App.ps1
         Audit-AppDelegationRisks.ps1
-│   └── Audit-AllUsersRolePerms.ps1
-│   └── ** automate creation of malicious-looking OAuth authorization flows (device‑code and consent URLs) used in consent‑phishing simulations **
+│   └── 👉** automate creation of malicious-looking OAuth authorization flows (device‑code and consent URLs) used in consent‑phishing simulations **
 │       generate_oauth_phishing_url_pwnd2.ps1
 │       generate_oauth_phishing_url_MS_App2.ps1
 │       generate_oauth_phishing_url2.ps1
@@ -179,7 +181,7 @@ It will produce a spreadsheet file named DisabledAccounts_Report.csv
 Admins should investigate these files and clean up their AD/AAD as needed.
 
 ---
-**list_all_applications2.ps1 & .BulkMultiPermExploitability2ps1 & Profile-App.ps1 & Audit-AppDelegationRisks.ps1**
+👉** Azure AD application auditing tools **
 
 ### `list_all_applications2.ps1`
 - **Purpose:** Enumerates every registered application and service principal in an Entra ID tenant.  
@@ -226,6 +228,8 @@ Use like so:
 `.\Audit-AllUsersRolePerms.ps1`
 
 ---
+👉** automate creation of malicious-looking OAuth authorization flows (device‑code and consent URLs) used in consent‑phishing simulations **
+
 ### `generate_oauth_phishing_url_pwnd2.ps1`
 
 Produces preconfigured phishing payloads and tracking for “pwnd” style scenarios where the script automates the device‑code flow lifecycle (create code, deliver to victim, poll for token).
@@ -239,6 +243,17 @@ Builds phishing URLs that impersonate or reuse Microsoft‑branded client IDs an
 ### `generate_oauth_phishing_url2.ps1`
 
 Generates OAuth device‑code or authorization URLs and associated tracking artifacts that an attacker could deliver to a target to induce them to approve an OAuth consent prompt.
+
+---
+### `watch_X_job3.ps1`
+
+Use like so:
+`.\watch_X_job3.ps1 -ResourceGroupName 'XXX-Hybrid-Automation'  -AutomationAccountName 'XXX-Cybersecurity-Automation' -RunbookName pwned`
+or
+`$job = Start-AzAutomationRunbook  -ResourceGroupName 'XXX-Hybrid-Automation'  -AutomationAccountName 'XXX-Cybersecurity-Automation'  -Name 'pwned'  -RunOn 'xxxGroup'
+
+.\watch_X_job3.ps1 -ResourceGroupName 'XXX-Hybrid-Automation'  -AutomationAccountName 'XXX-Cybersecurity-Automation' -RunbookName pwned -JobId $job.JobId`
+
 
 ## ── 📂 Section: On-Prem Active Directory ──
 ---
