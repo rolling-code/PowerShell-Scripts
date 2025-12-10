@@ -250,9 +250,8 @@ Generates OAuth device‑code or authorization URLs and associated tracking arti
 Use like so:
 `.\watch_X_job3.ps1 -ResourceGroupName 'XXX-Hybrid-Automation'  -AutomationAccountName 'XXX-Cybersecurity-Automation' -RunbookName pwned`
 or
-`$job = Start-AzAutomationRunbook  -ResourceGroupName 'XXX-Hybrid-Automation'  -AutomationAccountName 'XXX-Cybersecurity-Automation'  -Name 'pwned'  -RunOn 'xxxGroup'
-
-.\watch_X_job3.ps1 -ResourceGroupName 'XXX-Hybrid-Automation'  -AutomationAccountName 'XXX-Cybersecurity-Automation' -RunbookName pwned -JobId $job.JobId`
+`$job = Start-AzAutomationRunbook  -ResourceGroupName 'XXX-Hybrid-Automation'  -AutomationAccountName 'XXX-Cybersecurity-Automation'  -Name 'pwned'  -RunOn 'xxxGroup'`
+`.\watch_X_job3.ps1 -ResourceGroupName 'XXX-Hybrid-Automation'  -AutomationAccountName 'XXX-Cybersecurity-Automation' -RunbookName pwned -JobId $job.JobId`
 
 
 ## ── 📂 Section: On-Prem Active Directory ──
