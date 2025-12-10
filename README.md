@@ -246,6 +246,8 @@ Generates OAuth device‑code or authorization URLs and associated tracking arti
 
 ---
 ### `watch_X_job3.ps1`
+Using Azure Hybrif Workers? Keep an eye on your Runbook without cikickety-clicking the portal.
+Will print out the Runbook logs.
 
 Use like so:
 `.\watch_X_job3.ps1 -ResourceGroupName 'XXX-Hybrid-Automation'  -AutomationAccountName 'XXX-Cybersecurity-Automation' -RunbookName pwned`
