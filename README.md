@@ -26,6 +26,7 @@ PowerShell-Scripts/
 │   └── watch_X_job3.ps1
 │   └── Audit-AllUsersRolePerms.ps1
 │   └── Get-DisabledUsersLicenses6.ps1
+│   └── RemoveM365LicensesfromDisabledUsers3.ps1
 │   └── 👉** Azure AD application auditing tools **
         list_all_applications2.ps1
         BulkMultiPermExploitability2.ps1
@@ -191,6 +192,14 @@ Use like so:
 `Connect-MgGraph -Scopes "User.Read.All","Directory.Read.All" -UseDeviceAuthentication`
 
 `.\Get-DisabledUsersLicenses6.ps1 -ExportCsv .\disabled_licenses.csv`
+
+---
+### `RemoveM365LicensesfromDisabledUsers3.ps1`
+
+Enumerates disabled users and (by default in dry‑run) identifies and exports their assigned license names; when not in dry‑run it removes direct user licenses and logs actions.
+Prerequisites: An active Graph session (Connect-MgGraph) with User.ReadWrite.All and Directory.ReadWrite.All consent, Microsoft Graph PowerShell modules installed, sufficient admin rights to change licenses
+
+
 
 
 ---
