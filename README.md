@@ -189,6 +189,7 @@ Outputs a formatted table and optionally exports a CSV; preserves dry‑run beha
 
 Use like so:
 `Connect-MgGraph -Scopes "User.Read.All","Directory.Read.All" -UseDeviceAuthentication`
+
 `.\Get-DisabledUsersLicenses6.ps1 -ExportCsv .\disabled_licenses.csv`
 
 
