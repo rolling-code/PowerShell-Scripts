@@ -25,6 +25,7 @@ PowerShell-Scripts/
 │   └── enum_entra_admins.ps1 & find_disabled_ad_accounts.ps1
 │   └── watch_X_job3.ps1
 │   └── Audit-AllUsersRolePerms.ps1
+│   └── Get-DisabledUsersLicenses6.ps1
 │   └── 👉** Azure AD application auditing tools **
         list_all_applications2.ps1
         BulkMultiPermExploitability2.ps1
@@ -179,6 +180,17 @@ Then it will try to find users of that group, and output data to AdminLikeAccoun
 find_disabled_ad_accounts.ps1 will read that input file AdminLikeAccounts_Report.csv and try to determine if any of these admins is "disabled".
 It will produce a spreadsheet file named DisabledAccounts_Report.csv
 Admins should investigate these files and clean up their AD/AAD as needed.
+
+---
+### `Get-DisabledUsersLicenses6.ps1`
+
+Scans the tenant for disabled Microsoft 365 users via Microsoft Graph and resolves their assigned licenses into readable names.
+Outputs a formatted table and optionally exports a CSV; preserves dry‑run behavior so no changes are made unless explicitly requested.
+
+Use like so:
+`Connect-MgGraph -Scopes "User.Read.All","Directory.Read.All" -UseDeviceAuthentication`
+`.\Get-DisabledUsersLicenses6.ps1 -ExportCsv .\disabled_licenses.csv`
+
 
 ---
 👉** Azure AD application auditing tools **
