@@ -14,6 +14,8 @@ PowerShell-Scripts/
 │   └── DisableWindowsDefender.ps1
 │   └── kickoff.ps1
 │   └── SetAdaptorMetricWired_Highest.ps1
+│   └── Check-ModularDS.ps1
+│   └── Test-ADDnsLowPrivWrite.ps1
 
 ## ── 📂 ├── Azure Active Directory/
 │   └── get_az_token.ps1
@@ -566,3 +568,15 @@ Set interface metrics for physical adapters only.
 
 Use like so to see what changes it will perform without applying them:
 `.\SetAdaptorMetricWired_Highest.ps1 -Trial`
+
+---
+### `Check-ModularDS.ps1`
+
+Check if a WordPress web site is vulnerable to: CVE-2026-23550
+https://modulards.com/a-note-on-the-recent-modular-ds-security-update/
+
+---
+### `Test-ADDnsLowPrivWrite.ps1`
+
+Check if your AD is vulnerable to registering a DNS record in an Active Directory DNS zone.
+https://www.depthsecurity.com/blog/using-ntlm-reflection-to-own-active-directory/
