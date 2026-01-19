@@ -33,10 +33,10 @@
   LAB ONLY. Skips LDAPS certificate validation.
 
 .PARAMETER DomainNC
-  Optional. Explicit domain naming context DN (e.g., 'DC=aimfire,DC=net').
+  Optional. Explicit domain naming context DN (e.g., 'DC=xxx,DC=net').
 
 .PARAMETER Zone
-  Optional. FQDN of the forward lookup zone (e.g. aimfire.net). If omitted, derived from the domain NC.
+  Optional. FQDN of the forward lookup zone (e.g. xxx.net). If omitted, derived from the domain NC.
 
 .PARAMETER RecordIp
   IPv4 address for the test A record. Default: 127.0.0.1.
@@ -485,3 +485,4 @@ if ($created) {
 }
 
 if ($LogPath) { try { Stop-Transcript | Out-Null } catch {} }
+
