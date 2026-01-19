@@ -580,3 +580,9 @@ https://modulards.com/a-note-on-the-recent-modular-ds-security-update/
 
 Check if your AD is vulnerable to registering a DNS record in an Active Directory DNS zone.
 https://www.depthsecurity.com/blog/using-ntlm-reflection-to-own-active-directory/
+
+Usage:
+`\Test-ADDnsLowPrivWrite.ps1 -DcHost dc.xxx.net -Verbose`
+`\Test-ADDnsLowPrivWrite.ps1 -DcHost dc.xxx.net -UseSSL -Port 636 -Zone xxx.net -Verbose`
+`\Test-ADDnsLowPrivWrite.ps1 -DcHost dc.xxx.net -UseSSL -Port 636 -DomainNC 'DC=xxx,DC=net' -Verbose`
+
