@@ -583,6 +583,9 @@ https://www.depthsecurity.com/blog/using-ntlm-reflection-to-own-active-directory
 
 Usage:
 `\Test-ADDnsLowPrivWrite.ps1 -DcHost dc.xxx.net -Verbose`
+
 `\Test-ADDnsLowPrivWrite.ps1 -DcHost dc.xxx.net -UseSSL -Port 636 -Zone xxx.net -Verbose`
+
 `\Test-ADDnsLowPrivWrite.ps1 -DcHost dc.xxx.net -UseSSL -Port 636 -DomainNC 'DC=xxx,DC=net' -Verbose`
+
 
