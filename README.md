@@ -588,4 +588,15 @@ Usage:
 
 `\Test-ADDnsLowPrivWrite.ps1 -DcHost dc.xxx.net -UseSSL -Port 636 -DomainNC 'DC=xxx,DC=net' -Verbose`
 
+You can verify via ADWS in case of output: "[FAIL] VULNERABLE: low-priv add succeeded (record created)."
+
+$zoneDn  = 'DC=xxx.net,CN=MicrosoftDNS,CN=System,DC=aimfire,DC=net'
+$label   = '_aclvtest-XXX' <= Change this
+$server  = 'dc.xxx.net'
+Get-ADObject  -Server $server  -LDAPFilter "(dc=$label)"   -SearchBase $zoneDn -SearchScope Subtree  -Properties dc,dnsRecord,whenCreated,whenChanged,distinguishedName | Format-List distinguishedName,dc,whenCreated,whenChanged
+
+distinguishedName : DC=_aclvtest-XXX,DC=xxx.net,CN=MicrosoftDNS,CN=System,DC=aimfire,DC=net
+dc                : _aclvtest-XXX
+whenCreated       : 1/19/2026 12:56:35 PM
+whenChanged       : 1/19/2026 12:56:35 PM
 
