@@ -29,6 +29,7 @@ PowerShell-Scripts/
 │   └── Audit-AllUsersRolePerms.ps1
 │   └── Get-DisabledUsersLicenses6.ps1
 │   └── RemoveM365LicensesfromDisabledUsers3.ps1
+│   └── Inspect-AzWebAppSecurity-Consolidated.ps1
 │   └── 👉** Azure AD application auditing tools **
         list_all_applications2.ps1
         BulkMultiPermExploitability2.ps1
@@ -283,6 +284,20 @@ or
 `.\watch_X_job3.ps1 -ResourceGroupName 'XXX-Hybrid-Automation'  -AutomationAccountName 'XXX-Cybersecurity-Automation' -RunbookName pwned -JobId $job.JobId`
 
 
+---
+### `Inspect-AzWebAppSecurity-Consolidated.ps1`
+Will check Web app for things like:
+- Outbound IPs
+- Hostnames
+- Publishing Profiles
+- TLS
+- Secrets
+- Key Vault
+- Defender
+- WAF etc...
+
+Use like so:
+`.\Inspect-AzWebAppSecurity-Consolidated.ps1 -SubscriptionId xxx -ResourceGroup "yyy" -AppName "zzz" `
 
 ## ── 📂 Section: On-Prem Active Directory ──
 ---
