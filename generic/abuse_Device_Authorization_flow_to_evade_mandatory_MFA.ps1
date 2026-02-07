@@ -1,0 +1,36 @@
+#1) generate a device code. The ClientID in the below command is for 'Microsoft Inture Company Portal':
+$ClientID = "9ba1a5c7-f17a-4de9-a1f1-6178c8d51223"
+$Scope = ".default offline_access"
+$body = @{
+"client_id" = $ClientID
+"scope" = $Scope  
+}
+$authResponse = Invoke-RestMethod -UseBasicParsing -Method Post -Uri "https://login.microsoftonline.com/common/oauth2/v2.0/devicecode" -Body $body
+$authResponse
+
+#Sleep to give time to enter code in Browser
+Sleep 60
+
+#2) to request refresh token and access token for the Graph API:
+$GrantType = "urn:ietf:params:oauth:grant-type:device_code"
+$body=@{
+    "client_id" = $ClientID
+    "grant_type" = $GrantType
+    "code" = $authResponse.device_code
+}
+$Tokens = Invoke-RestMethod -UseBasicParsing -Method Post -Uri "https://login.microsoftonline.com/common/oauth2/v2.0/token" -Body $body -ErrorAction SilentlyContinue
+$Tokens
+$GraphToken = $Tokens.access_token
+
+#request access token for the ARM API
+$scope = 'https://management.azure.com/.default'
+$refresh_token = $tokens.refresh_token
+$GrantType = 'refresh_token'
+$body=@{
+    "client_id" = $ClientID
+    "scope" = $Scope
+    "refresh_token" = $refresh_token
+    "grant_type" = $GrantType
+}
+$Token_output = Invoke-RestMethod -UseBasicParsing -Method Post -Uri "https://login.microsoftonline.com/common/oauth2/v2.0/token" -Body $body
+$token = $Token_output.access_token
