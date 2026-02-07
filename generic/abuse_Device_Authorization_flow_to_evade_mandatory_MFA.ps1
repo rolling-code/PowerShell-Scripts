@@ -11,7 +11,7 @@ $authResponse
 #Sleep to give time to enter code in Browser
 Sleep 60
 
-#2) to request refresh token and access token for the Graph API:
+Write-Host "⚡ request refresh token and access token for the Graph API" -ForegroundColor Green
 $GrantType = "urn:ietf:params:oauth:grant-type:device_code"
 $body=@{
     "client_id" = $ClientID
@@ -22,7 +22,7 @@ $Tokens = Invoke-RestMethod -UseBasicParsing -Method Post -Uri "https://login.mi
 $Tokens
 $GraphToken = $Tokens.access_token
 
-#request access token for the ARM API
+Write-Host "⚡ request access token for the ARM API.." -ForegroundColor Green
 $scope = 'https://management.azure.com/.default'
 $refresh_token = $tokens.refresh_token
 $GrantType = 'refresh_token'
@@ -34,3 +34,4 @@ $body=@{
 }
 $Token_output = Invoke-RestMethod -UseBasicParsing -Method Post -Uri "https://login.microsoftonline.com/common/oauth2/v2.0/token" -Body $body
 $token = $Token_output.access_token
+$token
