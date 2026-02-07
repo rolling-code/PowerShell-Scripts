@@ -1,6 +1,6 @@
-#1) generate a device code.
-#$ClientID = "9ba1a5c7-f17a-4de9-a1f1-6178c8d51223"  # Intune
-$ClientID = "d3590ed6-52b3-4102-aeff-aad2292ab01c"   # Office
+#1) generate a device code. https://raw.githubusercontent.com/merill/microsoft-info/main/_info/MicrosoftApps.csv
+#$ClientID = "9ba1a5c7-f17a-4de9-a1f1-6178c8d51223"  # Intune  https://entrascopes.com/?appId=9ba1a5c7-f17a-4de9-a1f1-6178c8d51223
+$ClientID = "d3590ed6-52b3-4102-aeff-aad2292ab01c"   # Office  https://entrascopes.com/?appId=d3590ed6-52b3-4102-aeff-aad2292ab01c
 $Scope = ".default offline_access"
 $body = @{
 "client_id" = $ClientID
@@ -36,4 +36,5 @@ $body=@{
 $Token_output = Invoke-RestMethod -UseBasicParsing -Method Post -Uri "https://login.microsoftonline.com/common/oauth2/v2.0/token" -Body $body
 $token = $Token_output.access_token
 $token
+
 
