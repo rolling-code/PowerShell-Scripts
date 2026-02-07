@@ -1,5 +1,6 @@
-#1) generate a device code. The ClientID in the below command is for 'Microsoft Inture Company Portal':
-$ClientID = "9ba1a5c7-f17a-4de9-a1f1-6178c8d51223"
+#1) generate a device code.
+#$ClientID = "9ba1a5c7-f17a-4de9-a1f1-6178c8d51223"  # Intune
+$ClientID = "d3590ed6-52b3-4102-aeff-aad2292ab01c"   # Office
 $Scope = ".default offline_access"
 $body = @{
 "client_id" = $ClientID
@@ -35,3 +36,4 @@ $body=@{
 $Token_output = Invoke-RestMethod -UseBasicParsing -Method Post -Uri "https://login.microsoftonline.com/common/oauth2/v2.0/token" -Body $body
 $token = $Token_output.access_token
 $token
+
