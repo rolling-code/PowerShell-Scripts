@@ -15,7 +15,7 @@ PowerShell-Scripts/
 │   └── kickoff.ps1
 │   └── SetAdaptorMetricWired_Highest.ps1
 │   └── Check-ModularDS.ps1
-│   └── Test-ADDnsLowPrivWrite.ps1
+│   └── crt_enum.ps1
 
 ## ── 📂 ├── Azure Active Directory/
 │   └── get_az_token.ps1
@@ -63,6 +63,7 @@ PowerShell-Scripts/
 │   └── lan_audit_full2.ps1
 │   └── CheckWritableAttributesADUsers.py (Python, PowerShell version is below)
 │   └── CheckWritableAttributesADUsers.ps1 (is the PowerShell equivalent of Python file above)
+│   └── Test-ADDnsLowPrivWrite.ps1
 └── README.md
 ```
 
@@ -513,6 +514,41 @@ or specify other creds like so:
 
 Use `-PageSize 200` for large directories.
 
+---
+### `Test-ADDnsLowPrivWrite.ps1`
+
+Check if your AD is vulnerable to registering a DNS record in an Active Directory DNS zone.
+https://www.depthsecurity.com/blog/using-ntlm-reflection-to-own-active-directory/
+
+Usage:
+`\Test-ADDnsLowPrivWrite.ps1 -DcHost dc.xxx.net -Verbose`
+
+`\Test-ADDnsLowPrivWrite.ps1 -DcHost dc.xxx.net -UseSSL -Port 636 -Zone xxx.net -Verbose`
+
+`\Test-ADDnsLowPrivWrite.ps1 -DcHost dc.xxx.net -UseSSL -Port 636 -DomainNC 'DC=xxx,DC=net' -Verbose`
+
+You can verify via ADWS in case of output: "[FAIL] VULNERABLE: low-priv add succeeded (record created)."
+
+`
+$zoneDn  = 'DC=xxx.net,CN=MicrosoftDNS,CN=System,DC=aimfire,DC=net'
+
+$label   = '_aclvtest-XXX' <= Change this
+
+$server  = 'dc.xxx.net'
+
+Get-ADObject  -Server $server  -LDAPFilter "(dc=$label)"   -SearchBase $zoneDn -SearchScope Subtree  -Properties dc,dnsRecord,whenCreated,whenChanged,distinguishedName | Format-List distinguishedName,dc,whenCreated,whenChanged
+
+
+distinguishedName : DC=_aclvtest-XXX,DC=xxx.net,CN=MicrosoftDNS,CN=System,DC=aimfire,DC=net
+
+dc                : _aclvtest-XXX
+
+whenCreated       : 1/19/2026 12:56:35 PM
+
+whenChanged       : 1/19/2026 12:56:35 PM
+
+`
+
 ## ── 📂 Section: Generic Directory ──
 ---
 ### `Test-Feeds3.ps1`
@@ -591,37 +627,7 @@ Check if a WordPress web site is vulnerable to: CVE-2026-23550
 https://modulards.com/a-note-on-the-recent-modular-ds-security-update/
 
 ---
-### `Test-ADDnsLowPrivWrite.ps1`
+### `crt_enum.ps1`
 
-Check if your AD is vulnerable to registering a DNS record in an Active Directory DNS zone.
-https://www.depthsecurity.com/blog/using-ntlm-reflection-to-own-active-directory/
-
-Usage:
-`\Test-ADDnsLowPrivWrite.ps1 -DcHost dc.xxx.net -Verbose`
-
-`\Test-ADDnsLowPrivWrite.ps1 -DcHost dc.xxx.net -UseSSL -Port 636 -Zone xxx.net -Verbose`
-
-`\Test-ADDnsLowPrivWrite.ps1 -DcHost dc.xxx.net -UseSSL -Port 636 -DomainNC 'DC=xxx,DC=net' -Verbose`
-
-You can verify via ADWS in case of output: "[FAIL] VULNERABLE: low-priv add succeeded (record created)."
-
-`
-$zoneDn  = 'DC=xxx.net,CN=MicrosoftDNS,CN=System,DC=aimfire,DC=net'
-
-$label   = '_aclvtest-XXX' <= Change this
-
-$server  = 'dc.xxx.net'
-
-Get-ADObject  -Server $server  -LDAPFilter "(dc=$label)"   -SearchBase $zoneDn -SearchScope Subtree  -Properties dc,dnsRecord,whenCreated,whenChanged,distinguishedName | Format-List distinguishedName,dc,whenCreated,whenChanged
-
-
-distinguishedName : DC=_aclvtest-XXX,DC=xxx.net,CN=MicrosoftDNS,CN=System,DC=aimfire,DC=net
-
-dc                : _aclvtest-XXX
-
-whenCreated       : 1/19/2026 12:56:35 PM
-
-whenChanged       : 1/19/2026 12:56:35 PM
-
-`
+Performs automated subdomain discovery and service enumeration by ingesting a CSV file and extracting domain names specifically from the Asset Name column, then querying the certificate transparency database at crt.sh using its JSON endpoint (https://crt.sh/?q=<domain>&output=json) with a 30-second timeout and up to 3 retries per domain to ensure reliability against transient failures. For each input domain, it parses all returned certificate entries, extracts and normalizes unique domain names (including handling wildcard certificates and multi-value fields), and identifies newly discovered subdomains. It then sequentially tests network reachability via TCP connection attempts (3-second timeout) on ports 80 (HTTP), 443 (HTTPS), 22 (SSH), and 3389 (RDP), and, when web services are available, performs HTTP(S) requests to retrieve page titles for basic fingerprinting.
 
