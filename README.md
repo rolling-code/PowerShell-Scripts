@@ -236,7 +236,7 @@ Use like so:
 
 `.\list_all_applications2.ps1` Generates CSV files
 
-`.\BulkMultiPermExploitability.ps1 -ScopeCsvPath ScopeBreakdown.csv` This parses previously generated CSV file
+`.\BulkMultiPermExploitability2.ps1 -ScopeCsvPath ScopeBreakdown.csv` This parses previously generated CSV file
 
 When you see "Problem!" this is how you dig deeper into the app details
 
