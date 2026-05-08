@@ -16,6 +16,7 @@ PowerShell-Scripts/
 │   └── SetAdaptorMetricWired_Highest.ps1
 │   └── Check-ModularDS.ps1
 │   └── crt_enum.ps1
+│   └── rmm_nrpt_block.ps1
 
 ## ── 📂 ├── Azure Active Directory/
 │   └── get_az_token.ps1
@@ -630,4 +631,12 @@ https://modulards.com/a-note-on-the-recent-modular-ds-security-update/
 ### `crt_enum.ps1`
 
 Performs automated subdomain discovery and service enumeration by ingesting a CSV file and extracting domain names specifically from the Asset Name column, then querying the certificate transparency database at crt.sh using its JSON endpoint (https://crt.sh/?q=<domain>&output=json) with a 30-second timeout and up to 3 retries per domain to ensure reliability against transient failures. For each input domain, it parses all returned certificate entries, extracts and normalizes unique domain names (including handling wildcard certificates and multi-value fields), and identifies newly discovered subdomains. It then sequentially tests network reachability via TCP connection attempts (3-second timeout) on ports 80 (HTTP), 443 (HTTPS), 22 (SSH), and 3389 (RDP), and, when web services are available, performs HTTP(S) requests to retrieve page titles for basic fingerprinting.
+
+---
+### `rmm_nrpt_block.ps1`
+
+Add local Windows NRPT-based RMM domain block script generated from the LOLRMM domain list.
+NRPTUsage: run PowerShell as Administrator, then execute .\rmm_nrpt_block.ps1 to create local RMMBlockTest NRPT rules.NRPT (Name Resolution Policy Table) lets Windows apply DNS resolution rules for domain namespaces/suffixes before normal DNS lookup, making it better suited than a hosts file for wildcard-style domains like *.teamviewer.com or *.anydesk.com.
+Removal: run .\rmm_nrpt_block.ps1 -Remove to delete only the NRPT rules created by this script.
+Chosen over hosts file because hosts only supports exact hostnames, while NRPT supports broader namespace/suffix blocking for local testing.
 
