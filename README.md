@@ -65,6 +65,13 @@ PowerShell-Scripts/
 │   └── CheckWritableAttributesADUsers.py (Python, PowerShell version is below)
 │   └── CheckWritableAttributesADUsers.ps1 (is the PowerShell equivalent of Python file above)
 │   └── Test-ADDnsLowPrivWrite.ps1
+
+## ── 📂 ├── MSADPT/
+│   └── MSADPT_start2.ps1
+│   └── MSADPT_enumerate_dc2.ps1
+│   └── MSADPT_enumerate_shares2.ps1
+│   └── MSADPT_scan_network2.ps1
+│   └── MMSADPT_audit_adcs_esc1_esc16.ps1
 └── README.md
 ```
 
@@ -640,3 +647,291 @@ NRPTUsage: run PowerShell as Administrator, then execute .\rmm_nrpt_block.ps1 to
 Removal: run .\rmm_nrpt_block.ps1 -Remove to delete only the NRPT rules created by this script.
 Chosen over hosts file because hosts only supports exact hostnames, while NRPT supports broader namespace/suffix blocking for local testing.
 
+## ── 📂 Section: MSADPT ──
+---
+
+### `MSADPT_start2.ps1`
+This script requires all input to be provided through command-line parameters.
+
+It uses the supplied domain credential, target domain FQDN, and bootstrap Active Directory server to collect environment, Domain Controller, and ADCS discovery information.
+
+The results are written to CSV output files.
+
+---
+
+## Mandatory Parameter Summary
+
+| Parameter | Mandatory | Type | Description |
+|---|---:|---|---|
+| `-Credential` | Yes | `PSCredential` | Domain credential used for Active Directory enumeration operations. Typically supplied using `(Get-Credential)`. |
+| `-DomainFQDN` | Yes | `string` | Fully qualified domain name to enumerate. Example: `foo.bar`. |
+| `-AdServer` | Yes | `string` | Bootstrap Domain Controller or ADWS-capable server used to perform the initial Active Directory queries. Example: `DC1.foo.bar`. |
+| `-EnvironmentOutputCsvPath` | Yes | `string` | CSV output path for environment details collected by the script. |
+| `-DCOutputCsvPath` | Yes | `string` | CSV output path for discovered Domain Controllers. |
+| `-ADCSOutputCsvPath` | Yes | `string` | CSV output path for discovered Active Directory Certificate Services servers. |
+
+---
+
+## Input Parameters
+
+> These are runtime values supplied to the script.  
+> No input files are required by this script.
+
+| Parameter | Classification | Example |
+|---|---|---|
+| `-Credential` | 🟧 **INPUT VALUE** | `(Get-Credential)` |
+| `-DomainFQDN` | 🟧 **INPUT VALUE** | `foo.bar` |
+| `-AdServer` | 🟧 **INPUT VALUE** | `DC1.foo.bar` |
+
+---
+
+## Output Files
+
+| Parameter | Classification | Example Output File |
+|---|---|---|
+| `-EnvironmentOutputCsvPath` | 🟩 **OUTPUT FILE** | `C:\temp\MSADPT_Output\MSADPT_Environment_20260427.csv` |
+| `-DCOutputCsvPath` | 🟩 **OUTPUT FILE** | `C:\temp\MSADPT_Output\MSADPT_DCs_20260427.csv` |
+| `-ADCSOutputCsvPath` | 🟩 **OUTPUT FILE** | `C:\temp\MSADPT_Output\MSADPT_ADCS_20260427.csv` |
+
+---
+
+## Example Usage
+
+```powershell
+.\MSADPT_start2.ps1 -Credential (Get-Credential) `
+    -DomainFQDN "foo.bar" `
+    -EnvironmentOutputCsvPath "C:\temp\MSADPT_Output\MSADPT_Environment_20260427.csv" `
+    -DCOutputCsvPath "C:\temp\MSADPT_Output\MSADPT_DCs_20260427.csv" `
+    -ADCSOutputCsvPath "C:\temp\MSADPT_Output\MSADPT_ADCS_20260427.csv" `
+    -AdServer "DC1.foo.bar"
+```
+
+### `MSADPT_enumerate_dc2.ps1`
+
+This script enumerates details from Domain Controllers that were previously discovered by the MSADPT discovery/start script.
+
+It reads a Domain Controller CSV file as input, connects to Active Directory using explicit credentials, targets an explicitly supplied ADWS-capable Domain Controller, and writes per-DC enumeration output to a specified output directory.
+
+The script does not assume that the host running it is domain joined.
+
+---
+
+## Mandatory Parameter Summary
+
+| Parameter | Mandatory | Type | Description |
+|---|---:|---|---|
+| `-InputDcCsvPath` | Yes | `string` | Path to the input CSV file containing discovered Domain Controllers. The file must exist before the script runs. |
+| `-OutputBaseDir` | Yes | `string` | Base directory where per-DC output folders and CSV files will be written. |
+| `-Credential` | Yes | `PSCredential` | Domain credential used for all Active Directory enumeration operations. Typically supplied using `(Get-Credential)`. |
+| `-DomainFQDN` | Yes | `string` | Fully qualified domain name to enumerate. Example: `foo.bar`. |
+| `-AdServer` | Yes | `string` | Domain Controller or ADWS-capable server used for all Active Directory queries. Example: `DC1.foo.bar`. |
+
+---
+
+## Input Files and Input Values
+
+> These are files or runtime values required by the script.
+
+| Parameter / Item | Classification | Example |
+|---|---|---|
+| `-InputDcCsvPath` | 🟧 **INPUT FILE** | `C:\temp\MSADPT_Output\MSADPT_DCs.csv` |
+| `MSADPT.Helpers.psm1` | 🟧 **REQUIRED LOCAL DEPENDENCY FILE** | `.\MSADPT.Helpers.psm1` |
+| `-Credential` | 🟧 **INPUT VALUE** | `(Get-Credential)` |
+| `-DomainFQDN` | 🟧 **INPUT VALUE** | `foo.bar` |
+| `-AdServer` | 🟧 **INPUT VALUE** | `DC1.foo.bar` |
+
+---
+
+## Output Location
+
+| Parameter | Classification | Example Output Location |
+|---|---|---|
+| `-OutputBaseDir` | 🟩 **OUTPUT DIRECTORY** | `C:\temp\MSADPT_Output\DC_Enumeration` |
+
+---
+
+## Example Usage
+
+```powershell
+.\MSADPT_enumerate_dc2.ps1 `
+    -InputDcCsvPath "C:\temp\MSADPT_Output\MSADPT_DCs.csv" `
+    -OutputBaseDir "C:\temp\MSADPT_Output\DC_Enumeration" `
+    -Credential (Get-Credential) `
+    -DomainFQDN "foo.bar" `
+    -AdServer "DC1.foo.bar"
+```
+
+### `MSADPT_enumerate_shares2.ps1`
+
+This script enumerates network shares on previously discovered Domain Controllers and prepares per-DC output locations for share enumeration results.
+
+It consumes a Domain Controller CSV file generated by a previous MSADPT discovery script, uses explicit domain credentials for operations, and writes output under a specified base directory.
+
+The script does not assume that the host running it is domain joined.
+
+---
+
+## Mandatory Parameter Summary
+
+| Parameter | Mandatory | Type | Description |
+|---|---:|---|---|
+| `-InputDcCsvPath` | Yes | `string` | Path to the input CSV file containing discovered Domain Controllers. The file must exist before the script runs. |
+| `-OutputBaseDir` | Yes | `string` | Base output directory where per-DC share enumeration output folders and files will be written. |
+| `-Credential` | Yes | `PSCredential` | Domain credential used for Active Directory and share enumeration operations. Typically supplied using `(Get-Credential)`. |
+
+---
+
+## Input Files and Input Values
+
+> These are files or runtime values required by the script.
+
+| Parameter / Item | Classification | Example |
+|---|---|---|
+| `-InputDcCsvPath` | 🟧 **INPUT FILE** | `C:\temp\MSADPT_Output\MSADPT_DCs.csv` |
+| `MSADPT.Helpers.psm1` | 🟧 **REQUIRED LOCAL DEPENDENCY FILE** | `.\MSADPT.Helpers.psm1` |
+| `-Credential` | 🟧 **INPUT VALUE** | `(Get-Credential)` |
+
+---
+
+## Output Location
+
+| Parameter | Classification | Example Output Location |
+|---|---|---|
+| `-OutputBaseDir` | 🟩 **OUTPUT DIRECTORY** | `C:\temp\MSADPT_Output\Shares` |
+
+---
+
+## Example Usage
+
+```powershell
+.\MSADPT_enumerate_shares2.ps1 `
+    -InputDcCsvPath "C:\temp\MSADPT_Output\MSADPT_DCs.csv" `
+    -OutputBaseDir "C:\temp\MSADPT_Output\Shares" `
+    -Credential (Get-Credential)
+```
+
+### `MSADPT_scan_network2.ps1`
+
+This script performs explicit network discovery and service checks against one or more operator-supplied IPv4 target ranges.
+
+It does not automatically derive local network ranges, does not assume the host is domain joined, and does not rely on a configuration file or session-scoped credentials.
+
+The script can optionally attempt to use `nmap` if it is available in `PATH`, and can optionally perform SMB signing checks depending on the supplied parameter values.
+
+---
+
+## Mandatory Parameter Summary
+
+| Parameter | Mandatory | Type | Description |
+|---|---:|---|---|
+| `-Credential` | Yes | `PSCredential` | Credential used for remote operations that require authentication. Typically supplied using `(Get-Credential)`. |
+| `-NetworkRanges` | Yes | `string[]` | One or more explicit IPv4 target ranges to process. Supports CIDR ranges and start/end IP ranges. |
+| `-CommonPorts` | Yes | `int[]` | One or more TCP ports to check. Ports must be between `1` and `65535`. |
+| `-UseNmapIfAvailable` | Yes | `bool` | Indicates whether the script should attempt to use `nmap` if it is present in `PATH`. |
+| `-CheckSMBSigning` | Yes | `bool` | Indicates whether SMB signing checks should be performed in the main scan logic. |
+| `-OutputBaseDir` | Yes | `string` | Base directory for any per-run or raw output artifacts. |
+| `-OutputHostsCsvPath` | Yes | `string` | Explicit CSV output path for discovered hosts. |
+| `-OutputOpenPortsCsvPath` | Yes | `string` | Explicit CSV output path for discovered open ports. |
+| `-OutputSmbSigningCsvPath` | Yes | `string` | Explicit CSV output path for SMB signing results. |
+
+---
+
+## Input Files and Input Values
+
+> These are files, dependencies, or runtime values required by the script.
+
+| Parameter / Item | Classification | Example |
+|---|---|---|
+| `MSADPT.Helpers.psm1` | 🟧 **REQUIRED LOCAL DEPENDENCY FILE** | `.\MSADPT.Helpers.psm1` |
+| `-Credential` | 🟧 **INPUT VALUE** | `(Get-Credential)` |
+| `-NetworkRanges` | 🟧 **INPUT VALUE** | `"10.10.10.0/24","10.20.30.10-10.20.30.20"` |
+| `-CommonPorts` | 🟧 **INPUT VALUE** | `445,3389,5985` |
+| `-UseNmapIfAvailable` | 🟧 **INPUT VALUE** | `$true` |
+| `-CheckSMBSigning` | 🟧 **INPUT VALUE** | `$true` |
+
+---
+
+## Output Locations and Files
+
+| Parameter | Classification | Example Output Location |
+|---|---|---|
+| `-OutputBaseDir` | 🟩 **OUTPUT DIRECTORY** | `C:\temp\MSADPT_Output\Network` |
+| `-OutputHostsCsvPath` | 🟩 **OUTPUT FILE** | `C:\temp\MSADPT_Output\MSADPT_Network_Hosts.csv` |
+| `-OutputOpenPortsCsvPath` | 🟩 **OUTPUT FILE** | `C:\temp\MSADPT_Output\MSADPT_OpenPorts.csv` |
+| `-OutputSmbSigningCsvPath` | 🟩 **OUTPUT FILE** | `C:\temp\MSADPT_Output\MSADPT_SMBSigning_Status.csv` |
+
+---
+
+## Example Usage
+
+```powershell
+.\MSADPT_scan_network2.ps1 `
+    -Credential (Get-Credential) `
+    -NetworkRanges "10.10.10.0/24","10.20.30.10-10.20.30.20" `
+    -CommonPorts 445,3389,5985 `
+    -UseNmapIfAvailable $true `
+    -CheckSMBSigning $true `
+    -OutputBaseDir "C:\temp\MSADPT_Output\Network" `
+    -OutputHostsCsvPath "C:\temp\MSADPT_Output\MSADPT_Network_Hosts.csv" `
+    -OutputOpenPortsCsvPath "C:\temp\MSADPT_Output\MSADPT_OpenPorts.csv" `
+    -OutputSmbSigningCsvPath "C:\temp\MSADPT_Output\MSADPT_SMBSigning_Status.csv"
+```
+
+### `MSADPT_audit_adcs_esc1_esc16.ps1`
+
+This script performs a defensive, configuration-focused audit of an Active Directory Certificate Services (AD CS) deployment for likely exposure indicators associated with ESC1 through ESC16.
+
+The script enumerates enterprise Certification Authorities, published certificate templates, PKI-related objects in the Configuration partition, template ACLs, selected PKI object ACLs, selected CA registry flags, selected Domain Controller certificate-mapping posture indicators, and web enrollment exposure indicators where possible.
+
+The script does not exploit anything, request or forge certificates, or modify templates, ACLs, registry keys, or CA settings.
+
+---
+
+## Mandatory Parameter Summary
+
+| Parameter | Mandatory | Type | Description |
+|---|---:|---|---|
+| `-OutputBaseDir` | Yes | `string` | Directory where CSV and log outputs are written. |
+| `-IncludeUnpublishedTemplates` | Yes | `switch` | Controls whether all certificate templates in Active Directory are evaluated. When omitted behavior is not allowed because the parameter is mandatory. Use `-IncludeUnpublishedTemplates` to enable, or `-IncludeUnpublishedTemplates:$false` to disable. |
+| `-SkipRemoteChecks` | Yes | `switch` | Controls whether best-effort remote registry and web endpoint checks against CA servers and Domain Controllers are skipped. Use `-SkipRemoteChecks` to skip remote checks, or `-SkipRemoteChecks:$false` to perform them. |
+| `-DirectoryServer` | Yes | `string` | Domain Controller or directory server to use for Active Directory queries. Example: `DC1.foo.bar`. |
+| `-Credential` | Yes | `PSCredential` | Credential used for Active Directory queries and remote checks. Typically supplied using `(Get-Credential)` or a credential variable. |
+
+---
+
+## Input Files and Input Values
+
+> These are files, dependencies, switches, or runtime values required by the script.
+
+| Parameter / Item | Classification | Example |
+|---|---|---|
+| `MSADPT.Helpers.psm1` | 🟧 **REQUIRED LOCAL DEPENDENCY FILE** | `.\MSADPT.Helpers.psm1` |
+| `-DirectoryServer` | 🟧 **INPUT VALUE** | `DC1.foo.bar` |
+| `-Credential` | 🟧 **INPUT VALUE** | `$cred` |
+| `-IncludeUnpublishedTemplates` | 🟧 **INPUT SWITCH** | `-IncludeUnpublishedTemplates:$false` |
+| `-SkipRemoteChecks` | 🟧 **INPUT SWITCH** | `-SkipRemoteChecks:$false` |
+
+---
+
+## Output Locations and Files
+
+| Parameter / Output | Classification | Example |
+|---|---|---|
+| `-OutputBaseDir` | 🟩 **OUTPUT DIRECTORY** | `C:\temp\MSADPT_Output\ADCS` |
+| `MSADPT_ADCS_ESC_Audit_<timestamp>.csv` | 🟩 **OUTPUT FILE** | `C:\temp\MSADPT_Output\ADCS\MSADPT_ADCS_ESC_Audit_<timestamp>.csv` |
+| `MSADPT_ADCS_ESC_Audit_Log_<timestamp>.txt` | 🟩 **OUTPUT FILE** | `C:\temp\MSADPT_Output\ADCS\MSADPT_ADCS_ESC_Audit_Log_<timestamp>.txt` |
+
+---
+
+## Example Usage: Standard Audit
+
+```powershell
+$cred = Get-Credential
+
+.\MSADPT_audit_adcs_esc1_esc16.ps1 `
+    -DirectoryServer "DC1.foo.bar" `
+    -Credential $cred `
+    -OutputBaseDir "C:\temp\MSADPT_Output\ADCS" `
+    -IncludeUnpublishedTemplates:$false `
+    -SkipRemoteChecks:$false
+```
