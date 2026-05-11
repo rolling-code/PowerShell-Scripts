@@ -71,7 +71,7 @@ PowerShell-Scripts/
 │   └── MSADPT_enumerate_dc2.ps1
 │   └── MSADPT_enumerate_shares2.ps1
 │   └── MSADPT_scan_network2.ps1
-│   └── MMSADPT_audit_adcs_esc1_esc16.ps1
+│   └── MSADPT_audit_adcs_esc1_esc16.ps1
 └── README.md
 ```
 
