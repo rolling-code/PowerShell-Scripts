@@ -72,6 +72,7 @@ PowerShell-Scripts/
 │   └── MSADPT_enumerate_shares2.ps1
 │   └── MSADPT_scan_network2.ps1
 │   └── MSADPT_audit_adcs_esc1_esc16.ps1
+│   └── MSADPT_M365_DirectOAuth_ContentGrabber_V2.ps1
 └── README.md
 ```
 
@@ -935,3 +936,12 @@ $cred = Get-Credential
     -IncludeUnpublishedTemplates:$false `
     -SkipRemoteChecks:$false
 ```
+
+### `MSADPT_M365_DirectOAuth_ContentGrabber_V2.ps1`
+
+Add M365 Direct OAuth device-code validation helper for approved tabletop and lab scenarios.
+
+This script demonstrates how Graph-scoped device-code authentication differs from Azure CLI / Az PowerShell management-context authentication, and records resulting M365 content-access indicators for defensive validation and awareness exercises.
+
+
+
