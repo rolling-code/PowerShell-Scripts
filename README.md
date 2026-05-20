@@ -644,25 +644,33 @@ Performs automated subdomain discovery and service enumeration by ingesting a CS
 ### `rmm_nrpt_block.ps1`
 
 Add local Windows NRPT-based RMM domain block script generated from the LOLRMM domain list.
-NRPTUsage: run PowerShell as Administrator, then execute .\rmm_nrpt_block.ps1 to create local RMMBlockTest NRPT rules.NRPT (Name Resolution Policy Table) lets Windows apply DNS resolution rules for domain namespaces/suffixes before normal DNS lookup, making it better suited than a hosts file for wildcard-style domains like *.teamviewer.com or *.anydesk.com.
-Removal: run .\rmm_nrpt_block.ps1 -Remove to delete only the NRPT rules created by this script.
+NRPTUsage: run PowerShell as Administrator, then execute 
+`.\rmm_nrpt_block.ps1`
+to create local RMMBlockTest NRPT rules.NRPT (Name Resolution Policy Table) lets Windows apply DNS resolution rules for domain namespaces/suffixes before normal DNS lookup, making it better suited than a hosts file for wildcard-style domains like *.teamviewer.com or *.anydesk.com.
+Removal: run 
+`.\rmm_nrpt_block.ps1 -Remove`
+to delete only the NRPT rules created by this script.
+
 Chosen over hosts file because hosts only supports exact hostnames, while NRPT supports broader namespace/suffix blocking for local testing.
+To verify rule run:
+`Get-DnsClientNrptRule | Where-Object Comment -eq 'RMMBlockTest'`
 
 ---
 ### `lookup.ps1`
 
 Download KEV JSON 
-Invoke-WebRequest -Uri "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json" -OutFile kev.json 
+`Invoke-WebRequest -Uri "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json" -OutFile kev.json`
 
 Download EPSS CSV 
-Invoke-WebRequest -Uri "https://epss.cyentia.com/epss_scores-current.csv.gz" -OutFile epss.gz 
+`Invoke-WebRequest -Uri "https://epss.cyentia.com/epss_scores-current.csv.gz" -OutFile epss.gz`
 
 Populate table with your CVEs
+```powershell
 [PSCustomObject]@{ 
         Asset = "foo - Edge Browser" 
         CVE   = "CVE-2026-7902" 
     }, 
-
+```
 Run lookup.ps1
 
 ## ── 📂 Section: MSADPT ──
