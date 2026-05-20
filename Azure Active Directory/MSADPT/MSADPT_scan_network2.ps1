@@ -1090,10 +1090,10 @@ foreach ($Range in $NetworkRanges) {
 
 if (@($SMBSigningStatus).Count -gt 0) {
     $SMBSigningStatus | Export-Csv -Path $OutputSmbSigningCsvPath -NoTypeInformation -Force
-    Write-Log -Message "SMB signing results written to $OutputSmbSigningCsvPath." -Level 'INFO'
+    Write-MSADPTLog -Message "SMB signing results written to $OutputSmbSigningCsvPath." -Level 'INFO'
 }
 else {
-    Write-Log -Message "No SMB signing results were collected." -Level 'WARNING'
+    Write-MSADPTLog -Message "No SMB signing results were collected." -Level 'WARNING'
 }
 
 Write-MSADPTLog -Message "MSADPT_scan_network2.ps1 completed." -Level 'INFO'
