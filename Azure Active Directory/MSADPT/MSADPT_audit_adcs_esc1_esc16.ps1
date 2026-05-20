@@ -74,18 +74,21 @@
 
 param(
     [Parameter(Mandatory)]
+	[ValidateNotNullOrEmpty()]
     [string]$OutputBaseDir,
 
     [Parameter(Mandatory)]
-    [switch]$IncludeUnpublishedTemplates,
+    [bool]$IncludeUnpublishedTemplates,
 
     [Parameter(Mandatory)]
-    [switch]$SkipRemoteChecks,
+    [bool]$SkipRemoteChecks,
 
     [Parameter(Mandatory)]
+	[ValidateNotNullOrEmpty()]
     [string]$DirectoryServer,
 
     [Parameter(Mandatory)]
+	[ValidateNotNull()]
     [PSCredential]$Credential
 )
 
@@ -422,11 +425,20 @@ function Add-ESCFinding {
 $adSplat = New-MSADPTAdCommandSplat -Server $DirectoryServer -Credential $Credential
 
 # ---------------------------------------------------------------------
+# Pre-flight: AD connectivity check
+# ---------------------------------------------------------------------
+$rootDSE = Test-MSADPTADConnectivity -Credential $Credential -AdServer $DirectoryServer
+if (-not $rootDSE) {
+    Write-Log -Message "Active Directory connectivity pre-flight failed. Aborting." -Level 'ERROR'
+    exit 1
+}
+
+# ---------------------------------------------------------------------
 # Enumerate AD CS / PKI objects
 # ---------------------------------------------------------------------
 try {
-    $rootDse = Get-ADRootDSE @adSplat -ErrorAction Stop
-    $configNc = $rootDse.configurationNamingContext
+    #$rootDse = Get-ADRootDSE @adSplat -ErrorAction Stop
+    $configNc = $rootDSE.configurationNamingContext
 
     $templatesBase   = "CN=Certificate Templates,CN=Public Key Services,CN=Services,$configNc"
     $enrollmentBase  = "CN=Enrollment Services,CN=Public Key Services,CN=Services,$configNc"
