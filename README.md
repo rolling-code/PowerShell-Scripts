@@ -643,7 +643,7 @@ Performs automated subdomain discovery and service enumeration by ingesting a CS
 ---
 ### `rmm_nrpt_block.ps1`
 
-Add local Windows NRPT-based RMM domain block script generated from the LOLRMM domain list.
+Add local Windows NRPT-based RMM domain block script generated from the LOLRMM domain list (https://lolrmm.io/api/rmm_domains.csv).
 NRPTUsage: run PowerShell as Administrator, then execute 
 
 `.\rmm_nrpt_block.ps1`
