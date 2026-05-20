@@ -83,23 +83,15 @@
 
 param(
     [Parameter(Mandatory)]
+	[ValidateNotNull()]
     [PSCredential]$Credential,
 
     [Parameter(Mandatory)]
+	[ValidateNotNullOrEmpty()]
     [string[]]$NetworkRanges,
 
     [Parameter(Mandatory)]
-    [ValidateScript({
-        if (@($_).Count -eq 0) {
-            throw "CommonPorts cannot be empty."
-        }
-        foreach ($port in $_) {
-            if ($port -lt 1 -or $port -gt 65535) {
-                throw "Invalid port '$port'. Ports must be between 1 and 65535."
-            }
-        }
-        $true
-    })]
+    [ValidateRange(1, 65535)]
     [int[]]$CommonPorts,
 
     [Parameter(Mandatory)]
@@ -109,15 +101,19 @@ param(
     [bool]$CheckSMBSigning,
 
     [Parameter(Mandatory)]
+	[ValidateNotNullOrEmpty()]
     [string]$OutputBaseDir,
 
     [Parameter(Mandatory)]
+	[ValidateNotNullOrEmpty()]
     [string]$OutputHostsCsvPath,
 
     [Parameter(Mandatory)]
+	[ValidateNotNullOrEmpty()]
     [string]$OutputOpenPortsCsvPath,
 
     [Parameter(Mandatory)]
+	[ValidateNotNullOrEmpty()]
     [string]$OutputSmbSigningCsvPath
 )
 
@@ -138,7 +134,7 @@ Import-Module $helpersModulePath -Force -ErrorAction Stop
 # ---------------------------------------------------------------------
 $ScriptStartTime = Get-Date -Format "yyyyMMdd_HHmmss"
 
-Write-MSADPTLog -Message "MSADPT_scan_network.ps1 starting." -Level 'INFO'
+Write-MSADPTLog -Message "MSADPT_scan_network2.ps1 starting." -Level 'INFO'
 Write-MSADPTLog -Message "NetworkRanges           : $($NetworkRanges -join ', ')" -Level 'INFO'
 Write-MSADPTLog -Message "CommonPorts             : $($CommonPorts -join ', ')" -Level 'INFO'
 Write-MSADPTLog -Message "UseNmapIfAvailable      : $UseNmapIfAvailable" -Level 'INFO'
@@ -643,7 +639,40 @@ foreach ($Range in $NetworkRanges) {
 								Write-MSADPTLog -Message "    - Method 1/5: Remote Registry via .NET (LanmanServer -> LanmanWorkstation)."
 
 								try {
-									$baseKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey(
+									$regCandidates = @(
+										@{
+											Scope = 'LanmanServer'
+											Path  = 'SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters'
+										},
+										@{
+											Scope = 'LanmanWorkstation'
+											Path  = 'SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters'
+										}
+									)
+
+									foreach ($candidate in $regCandidates) {
+										$enable = Get-MSADPTRemoteRegistryValue `
+											-ComputerName $RemoteTarget `
+											-SubKey $candidate.Path `
+											-ValueName 'EnableSecuritySignature'
+
+										$require = Get-MSADPTRemoteRegistryValue `
+											-ComputerName $RemoteTarget `
+											-SubKey $candidate.Path `
+											-ValueName 'RequireSecuritySignature'
+
+										if ($null -ne $enable -or $null -ne $require) {
+											$SMBConfig = [PSCustomObject]@{
+												Scope                    = $candidate.Scope
+												EnableSecuritySignature  = if ($null -ne $enable) { [int]$enable } else { $null }
+												RequireSecuritySignature = if ($null -ne $require) { [int]$require } else { $null }
+											}
+
+											$ConfigSource = "Remote Registry ($($candidate.Scope))"
+											break
+										}
+									}
+								<# 	$baseKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey(
 										[Microsoft.Win32.RegistryHive]::LocalMachine,
 										$RemoteTarget
 									)
@@ -695,7 +724,7 @@ foreach ($Range in $NetworkRanges) {
 										catch {
 											Write-MSADPTLog -Message "      - Remote Registry failed for $($candidate.Scope): $($_.Exception.Message)" -Level 'WARNING'
 										}
-									}
+									} #>
 								}
 								catch {
 									Write-MSADPTLog -Message "      - Remote Registry initialization failed on ${RemoteTarget}: $($_.Exception.Message)" -Level 'WARNING'
@@ -1059,5 +1088,12 @@ foreach ($Range in $NetworkRanges) {
 	}
 }
 
+if (@($SMBSigningStatus).Count -gt 0) {
+    $SMBSigningStatus | Export-Csv -Path $OutputSmbSigningCsvPath -NoTypeInformation -Force
+    Write-Log -Message "SMB signing results written to $OutputSmbSigningCsvPath." -Level 'INFO'
+}
+else {
+    Write-Log -Message "No SMB signing results were collected." -Level 'WARNING'
+}
 
-Write-MSADPTLog -Message "MSADPT_scan_network.ps1 completed." -Level 'INFO'
+Write-MSADPTLog -Message "MSADPT_scan_network2.ps1 completed." -Level 'INFO'
