@@ -648,6 +648,23 @@ NRPTUsage: run PowerShell as Administrator, then execute .\rmm_nrpt_block.ps1 to
 Removal: run .\rmm_nrpt_block.ps1 -Remove to delete only the NRPT rules created by this script.
 Chosen over hosts file because hosts only supports exact hostnames, while NRPT supports broader namespace/suffix blocking for local testing.
 
+---
+### `lookup.ps1`
+
+Download KEV JSON 
+Invoke-WebRequest -Uri "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json" -OutFile kev.json 
+
+Download EPSS CSV 
+Invoke-WebRequest -Uri "https://epss.cyentia.com/epss_scores-current.csv.gz" -OutFile epss.gz 
+
+Populate table with your CVEs
+[PSCustomObject]@{ 
+        Asset = "foo - Edge Browser" 
+        CVE   = "CVE-2026-7902" 
+    }, 
+
+Run lookup.ps1
+
 ## ── 📂 Section: MSADPT ──
 ---
 
