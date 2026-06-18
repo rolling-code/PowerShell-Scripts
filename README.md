@@ -32,6 +32,7 @@ PowerShell-Scripts/
 │   └── RemoveM365LicensesfromDisabledUsers3.ps1
 │   └── Inspect-AzWebAppSecurity-Consolidated.ps1
 │   └── Audit-NeverSucceedingMailForwardingRules.ps1
+│   └── Review-TeamsLifecycleCleanupCandidates.ps1
 │   └── 👉** Azure AD application auditing tools **
         list_all_applications2.ps1
         BulkMultiPermExploitability2.ps1
@@ -333,6 +334,31 @@ Use like so:
 
 ```powershell
 .\Audit-NeverSucceedingMailForwardingRules.ps1 -OutputDirectory . -IncludeReviewWarnings
+```
+
+---
+### `Review-TeamsLifecycleCleanupCandidates.ps1`
+
+Performs a read-only Microsoft Teams lifecycle hygiene review.
+
+Will check Teams-backed Microsoft 365 groups for things like:
+
+- Teams with no members
+- Teams with no enabled/active members
+- Teams with disabled members present
+- Teams with external/guest members
+- Teams with no owners
+- Teams with no enabled/active owners
+- Teams with excessive owners based on a configurable threshold
+
+This script is useful for identifying stale, orphaned, or risky Teams that may need owner validation, membership cleanup, archiving, or deletion review.
+
+The script does **not** delete, archive, or modify any Teams.
+
+Use like so:
+
+```powershell
+.\Review-TeamsLifecycleCleanupCandidates.ps1
 ```
 
 ## ── 📂 Section: On-Prem Active Directory ──
