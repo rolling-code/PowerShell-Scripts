@@ -309,6 +309,31 @@ Will check Web app for things like:
 Use like so:
 `.\Inspect-AzWebAppSecurity-Consolidated.ps1 -SubscriptionId xxx -ResourceGroup "yyy" -AppName "zzz" `
 
+---
+### `Audit-NeverSucceedingMailForwardingRules.ps1`
+
+Audits Exchange Online mailbox forwarding and Inbox rules for deterministic “will not succeed” or cleanup-worthy conditions.
+
+This script checks user and shared mailboxes for Exchange Online mailbox-level forwarding and Inbox rules that are stale, disabled, expired, or reference recipients that no longer resolve. It is intended to produce CSV evidence for mailbox rule cleanup, Secure Score remediation, and Exchange hygiene user stories.
+
+It checks for things like:
+
+- Mailbox-level forwarding to unresolved recipients
+- Inbox rules that forward, redirect, or forward as attachment to unresolved recipients
+- Rules pointing to soft-deleted, legacyDN, GUID, or missing Exchange recipients
+- Expired Inbox rule date conditions that should no longer match future mail
+- Disabled Inbox rules, when `-IncludeDisabledRules` is used
+- External forwarding that would be blocked by the tenant outbound forwarding policy, when `-IncludePolicyBlockedExternalForwarding` is used
+- Inbox rule warning messages, when `-IncludeReviewWarnings` is used
+
+Useful for identifying stale mailbox rules, broken forwarding logic, and forwarding-related exfiltration risk. Microsoft documents that Inbox rules can forward or redirect mailbox messages, and Microsoft also warns that automatic forwarding can be abused after account compromise for data disclosure/exfiltration. 【1-6b41f4】【2-81277f】
+
+Use like so:
+
+```powershell
+.\Audit-NeverSucceedingMailForwardingRules.ps1 -OutputDirectory . -IncludeReviewWarnings
+
+
 ## ── 📂 Section: On-Prem Active Directory ──
 ---
 ### `ad_object_permissions3.ps1`
