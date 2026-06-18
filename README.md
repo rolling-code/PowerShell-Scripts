@@ -31,6 +31,7 @@ PowerShell-Scripts/
 │   └── Get-DisabledUsersLicenses6.ps1
 │   └── RemoveM365LicensesfromDisabledUsers3.ps1
 │   └── Inspect-AzWebAppSecurity-Consolidated.ps1
+│   └── Audit-NeverSucceedingMailForwardingRules.ps1
 │   └── 👉** Azure AD application auditing tools **
         list_all_applications2.ps1
         BulkMultiPermExploitability2.ps1
