@@ -33,6 +33,7 @@ PowerShell-Scripts/
 │   └── Inspect-AzWebAppSecurity-Consolidated.ps1
 │   └── Audit-NeverSucceedingMailForwardingRules.ps1
 │   └── Review-TeamsLifecycleCleanupCandidates.ps1
+│   └── Report-InactiveGuestUsers-150Days.ps1
 │   └── 👉** Azure AD application auditing tools **
         list_all_applications2.ps1
         BulkMultiPermExploitability2.ps1
@@ -359,6 +360,42 @@ Use like so:
 
 ```powershell
 .\Review-TeamsLifecycleCleanupCandidates.ps1
+```
+
+---
+### `Report-InactiveGuestUsers-150Days.ps1`
+
+Creates a read-only report of Microsoft Entra guest users who have been inactive for more than a defined number of days.
+
+By default, the script reports guest users inactive for more than **150 days** and exports the results to CSV, sorted from oldest sign-in to newest sign-in.
+
+Will check Microsoft Entra guest users for things like:
+
+- Guest account display name
+- Guest user principal name
+- Mail address
+- Account enabled/disabled state
+- External user state
+- Created date
+- Last successful sign-in date
+- Last interactive sign-in date
+- Last non-interactive sign-in date
+- Effective last sign-in date
+- Days since last sign-in
+- Inactivity reason
+- Recommended action
+- Object ID
+
+Guests with no sign-in date are included as **Never signed in** if the guest account was created before the inactivity threshold.
+
+This script is useful for reviewing stale B2B/guest accounts before disabling or removing access.
+
+The script does **not** block, delete, or modify users.
+
+Use like so:
+
+```powershell
+.\Report-InactiveGuestUsers-150Days.ps1
 ```
 
 ## ── 📂 Section: On-Prem Active Directory ──
