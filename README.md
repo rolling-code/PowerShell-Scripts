@@ -326,13 +326,13 @@ It checks for things like:
 - External forwarding that would be blocked by the tenant outbound forwarding policy, when `-IncludePolicyBlockedExternalForwarding` is used
 - Inbox rule warning messages, when `-IncludeReviewWarnings` is used
 
-Useful for identifying stale mailbox rules, broken forwarding logic, and forwarding-related exfiltration risk. Microsoft documents that Inbox rules can forward or redirect mailbox messages, and Microsoft also warns that automatic forwarding can be abused after account compromise for data disclosure/exfiltration. 【1-6b41f4】【2-81277f】
+Useful for identifying stale mailbox rules, broken forwarding logic, and forwarding-related exfiltration risk. Microsoft documents that Inbox rules can forward or redirect mailbox messages, and Microsoft also warns that automatic forwarding can be abused after account compromise for data disclosure/exfiltration.
 
 Use like so:
 
 ```powershell
 .\Audit-NeverSucceedingMailForwardingRules.ps1 -OutputDirectory . -IncludeReviewWarnings
-
+```
 
 ## ── 📂 Section: On-Prem Active Directory ──
 ---
