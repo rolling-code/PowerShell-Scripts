@@ -29,7 +29,7 @@ PowerShell-Scripts/
 │   └── find_disabled_accounts.ps1
 │   └── watch_X_job3.ps1
 │   └── Audit-AllUsersRolePerms.ps1
-│   └── Get-DisabledUsersLicenses6.ps1
+│   └── Get-DisabledUsersLicenses.ps1
 │   └── RemoveM365LicensesfromDisabledUsers3.ps1
 │   └── Inspect-AzWebAppSecurity-Consolidated.ps1
 │   └── Audit-NeverSucceedingMailForwardingRules.ps1
@@ -237,7 +237,7 @@ The script queries Microsoft Graph and therefore does not require a corporate ne
 
 
 ---
-### `Get-DisabledUsersLicenses6.ps1`
+### `Get-DisabledUsersLicenses.ps1`
 
 Scans Microsoft Entra ID for disabled users who still have assigned Microsoft licenses and resolves license SKU identifiers into readable product names. The script exports one row per user-license assignment, distinguishes direct licensing from group-based licensing, identifies the assigning group, and records assignment state and errors.
 An optional per-user summary consolidates each disabled account’s licenses and assignment methods for easier license-reclamation review. The script is completely read-only and does not modify users, groups, or license assignments.
