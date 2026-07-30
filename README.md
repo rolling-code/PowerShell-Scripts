@@ -112,7 +112,7 @@ Notes:
 A series of insightful articles on cloud permissions was recently published by Sonrai Security:
 https://sonraisecurity.com/blog/powerful-cloud-permissions-you-should-know-part-1/
 
-I gathered all the Azure permissions they highlighted and wrote a PowerShell script to validate them in my environment. Automating these checks enables the operations team to:
+I gathered all the Azure permissions they highlighted and wrote a PowerShell script to validate them in my environment. Automating these checks enables the operations team (validates the current user’s permissions) to:
 - Validate issues consistently
 - Reproduce findings on demand
 - Schedule regular cybersecurity health assessments
