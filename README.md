@@ -165,13 +165,8 @@ Microsoft Graph Command Line Tools must be granted. If not you will be prompted 
 ---
 ### `grant_consent_MSGraph.ps1` (Must be granted access to MS Graph!)
 
-The provided script automates a delegated‐consent grant of Microsoft Graph permissions to a user on behalf of an application. In essence, it:
-- Connects to Microsoft Graph with elevated scopes.
-- Ensures a service principal exists for the client app (Graph Explorer).
-- Creates an OAuth2 delegated permission grant for that app to call Microsoft Graph APIs as the specified user.
-- Assigns the app to the user so it’s visible in their My Apps portal.
-
-An illicit consent grant attack abuses this exact flow. An attacker automates the creation of a malicious app, tricks a user into granting it high-risk scopes, and then uses those tokens to exfiltrate data—bypassing credentials and MFA entirely. By scripting consent grants at scale, adversaries can stealthily establish persistent backdoors.
+Demonstrates how a privileged Microsoft Graph administrator can programmatically create a user-specific delegated permission grant between a client service principal and Microsoft Graph, then assign the client application to the selected user. The delegated grant authorizes the application to call Microsoft Graph on behalf of that user, subject to the granted scopes and the user’s own effective permissions.
+This administrative workflow illustrates one mechanism that can be abused after a highly privileged identity or application is compromised. The script does not create a malicious application, perform consent phishing, obtain tokens, or independently bypass MFA. Because it modifies tenant consent and application assignments using highly privileged Graph permissions, it should be used only in an isolated lab or explicitly authorized administrative workflow.
 
 ---
 ### `sendmail.py`
