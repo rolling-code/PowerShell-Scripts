@@ -188,14 +188,14 @@ $env:ENTRA_CLIENT_SECRET = [System.Net.NetworkCredential]::new(
     $secureSecret
 ).Password
 
-python .\send_graph_mail.py `
-    --tenant-id "00000000-0000-0000-0000-000000000000" `
-    --client-id "11111111-1111-1111-1111-111111111111" `
-    --sender "notifications@contoso.com" `
-    --recipient "analyst@contoso.com" `
-    --subject "Microsoft Graph mail validation" `
-    --body "This is an authorized app-only Microsoft Graph email test." `
-    --acknowledge-authorized-mailbox `
+python .\send_graph_mail.py 
+    --tenant-id "00000000-0000-0000-0000-000000000000" 
+    --client-id "11111111-1111-1111-1111-111111111111" 
+    --sender "notifications@contoso.com" 
+    --recipient "analyst@contoso.com" 
+    --subject "Microsoft Graph mail validation" 
+    --body "This is an authorized app-only Microsoft Graph email test." 
+    --acknowledge-authorized-mailbox 
     --dry-run
 `
 Send the message by removing --dry-run
