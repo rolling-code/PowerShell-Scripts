@@ -152,10 +152,11 @@ Uses AADinternals to run Eight security checks on the tenant.
 ---
 ### `get_policies.ps1` (Must be granted access to MS Graph!)
 
-Determines which Azure AD Conditional Access (CA) policies apply to a specific user, evaluating both direct user inclusion/exclusion and group or role–based assignments.
+Performs a read-only analysis of the user-assignment scope for Microsoft Entra Conditional Access policies. The script resolves direct and transitive group memberships, active supported directory roles, policy inclusions and exclusions, and policy state, then explains why each policy targets, excludes, or does not target the specified user.
+The script does not calculate whether every policy will trigger during a specific authentication attempt. Conditional Access runtime conditions such as cloud application, device compliance, platform, location, user or sign-in risk, client type, and authentication flow require the Conditional Access What If tool or sign-in-log evidence.
 
 Use like so:
-`.\get_policies.ps1 userPrincipalname@domain.net`
+`.\get_policies.ps1 -UserPrincipalName "foo@contoso.com" -OutputCsv ".\ConditionalAccessUserTargeting.csv"`
 
 Microsoft Graph Command Line Tools must be granted. If not you will be prompted like so:
 
