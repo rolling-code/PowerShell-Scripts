@@ -38,7 +38,7 @@ PowerShell-Scripts/
 │   └── Get-AzureStorageAnonymousAccess.ps1
 │   └── Test-AzureBlobAnonymousEndpoints.ps1
 │   └── 👉** Azure AD application auditing tools **
-        list_all_applications2.ps1
+        list_all_applications.ps1
         BulkMultiPermExploitability2.ps1
         Profile-App.ps1
         Audit-AppDelegationRisks.ps1
@@ -260,10 +260,8 @@ Prerequisites: An active Graph session (Connect-MgGraph) with User.ReadWrite.All
 ---
 👉** Azure AD application auditing tools **
 
-### `list_all_applications2.ps1`
-- **Purpose:** Enumerates every registered application and service principal in an Entra ID tenant.  
-- **Use Case:** Provides a broad **inventory baseline** of all apps.  
-- **Frequency:** Run **monthly or quarterly** as part of regular inventory checks.  
+### `list_all_applications.ps1`
+Enumerates all Microsoft Entra application registrations and enterprise application service principals visible to the current Microsoft Graph session. Exports separate application and service-principal reports, plus a normalized combined CSV inventory. Reuses an existing Graph session by default and supports optional interactive connection using Application.Read.All.
 
 ### `BulkMultiPermExploitability2.ps1`
 - **Purpose:** Bulk‑checks each app for exploitable Microsoft Graph permissions against a defined high‑risk list.  
