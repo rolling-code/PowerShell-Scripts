@@ -1,93 +1,117 @@
-# Prereq: az CLI installed and az login performed (use an account with Directory Reader / User Reader permissions)
+#requires -Version 7.0
+<#
+.SYNOPSIS
+Exports users from Microsoft Entra groups whose display names match an administrator-like pattern.
 
-# 1) find groups whose displayName contains "Administrator"
-$groups = az --% ad group list --query "[?contains(displayName,'Administrator')].[displayName,id]" --only-show-errors -o json | ConvertFrom-Json
+.DESCRIPTION
+Finds Microsoft Entra groups whose display names match a configurable regular expression and
+exports all direct and nested user members. The default pattern matches the word
+"administrator" case-insensitively. This is a naming-based discovery aid and does not prove
+that a matching group grants privileged access.
 
-if (-not $groups) {
-    Write-Host "No groups found." -ForegroundColor Yellow
-    exit 0
-}
+.PARAMETER GroupNamePattern
+Regular expression applied to group display names.
 
-$results = @()
+.PARAMETER OutputPath
+CSV report path.
 
-foreach ($g in $groups) {
-    $gName = $g[0]
-    $gId   = $g[1]
+.EXAMPLE
+./enum_entra_admins.ps1
 
-    Write-Host "Processing group: $gName ($gId)" -ForegroundColor Cyan
+.EXAMPLE
+./enum_entra_admins.ps1 -GroupNamePattern '(?i)administrator|privileged admin'
+#>
 
-    # 2) list members of the group (may return users, service principals, etc.)
-    $membersJson = az ad group member list --group $gId -o json 2>$null
-    if (-not $membersJson) { continue }
-    $members = $membersJson | ConvertFrom-Json
+[CmdletBinding()]
+param(
+    [Parameter()]
+    [ValidateNotNullOrEmpty()]
+    [string]$GroupNamePattern = '(?i)administrator',
 
-    foreach ($m in $members) {
-        # Determine type and UPN or AppId
-        $odataType = $m.'@odata.type'
-        $userPrincipalName = $null
-        $displayName = $null
-        $objectId = $m.id
+    [Parameter()]
+    [string]$OutputPath = (Join-Path $PWD 'AdminLikeAccounts_Report.csv')
+)
 
-        switch ($odataType) {
-            '#microsoft.graph.user' {
-                $userPrincipalName = $m.userPrincipalName
-                $displayName = $m.displayName
-            }
-            '#microsoft.graph.servicePrincipal' {
-                $userPrincipalName = $m.appId
-                $displayName = $m.displayName
-            }
-            default {
-                # fallback
-                $displayName = $m.displayName
-            }
-        }
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 
-        # 3) fetch Azure AD user details where applicable (az ad user show)
-        $aadUser = $null
-        if ($userPrincipalName -and ($userPrincipalName -like '*@*')) {
-            try {
-                $aadUserJson = az ad user show --id $userPrincipalName -o json 2>$null
-                if ($aadUserJson) { $aadUser = $aadUserJson | ConvertFrom-Json }
-            } catch { $aadUser = $null }
-        }
-
-        # 4) fetch Azure RBAC role assignments for the principal (may return ARM RBAC roles)
-        $rbac = @()
-        try {
-            # Use principal id (object id) for RBAC lookup if available
-            if ($objectId) {
-                $rbacJson = az role assignment list --assignee-object-id $objectId -o json 2>$null
-                if ($rbacJson) { $rbac = $rbacJson | ConvertFrom-Json }
-            } elseif ($userPrincipalName) {
-                $rbacJson = az role assignment list --assignee $userPrincipalName -o json 2>$null
-                if ($rbacJson) { $rbac = $rbacJson | ConvertFrom-Json }
-            }
-        } catch { $rbac = @() }
-
-        # compose an entry
-        $entry = [PSCustomObject]@{
-            GroupDisplayName        = $gName
-            GroupObjectId           = $gId
-            MemberObjectId          = $objectId
-            MemberDisplayName       = $displayName
-            MemberUPNorAppId        = $userPrincipalName
-            AccountEnabled          = if ($aadUser) { $aadUser.accountEnabled } else { $null }
-            Mail                    = if ($aadUser) { $aadUser.mail } else { $null }
-            JobTitle                = if ($aadUser) { $aadUser.jobTitle } else { $null }
-            Department              = if ($aadUser) { $aadUser.department } else { $null }
-            CreatedDateTime         = if ($aadUser) { $aadUser.createdDateTime } else { $null }
-            AzureRBACRoles          = if ($rbac -and $rbac.Count -gt 0) { ($rbac | ForEach-Object { "$($_.roleDefinitionName)@$($_.scope)" }) -join '; ' } else { "" }
-        }
-
-        $results += $entry
+foreach ($commandName in @('Connect-MgGraph','Get-MgContext','Get-MgGroup','Get-MgGroupTransitiveMemberAsUser')) {
+    if (-not (Get-Command $commandName -ErrorAction SilentlyContinue)) {
+        throw "Required command '$commandName' was not found. Install Microsoft.Graph.Authentication and Microsoft.Graph.Groups."
     }
 }
 
-# Output results to console and CSV
-$results | Sort-Object GroupDisplayName, MemberDisplayName | Format-Table -AutoSize
+try { [void][regex]::new($GroupNamePattern) }
+catch { throw "GroupNamePattern is not a valid regular expression: $($_.Exception.Message)" }
 
-$csvPath = ".\AdminLikeAccounts_Report.csv"
-$results | Export-Csv -Path $csvPath -NoTypeInformation
+$requiredScopes = @('GroupMember.Read.All','User.Read.All')
+$context = Get-MgContext
+$mustConnect = $null -eq $context
+if (-not $mustConnect) {
+    foreach ($scope in $requiredScopes) {
+        if ($scope -notin @($context.Scopes)) { $mustConnect = $true; break }
+    }
+}
+if ($mustConnect) {
+    Connect-MgGraph -Scopes $requiredScopes -NoWelcome | Out-Null
+}
 
-Write-Host "`nExported report to: $csvPath" -ForegroundColor Green
+$groups = @(
+    Get-MgGroup -All -Property Id,DisplayName,SecurityEnabled,MailEnabled |
+        Where-Object { [string]$_.DisplayName -match $GroupNamePattern } |
+        Sort-Object DisplayName
+)
+
+$results = [System.Collections.Generic.List[object]]::new()
+$errors = [System.Collections.Generic.List[object]]::new()
+
+foreach ($group in $groups) {
+    Write-Host "Enumerating: $($group.DisplayName)" -ForegroundColor DarkGray
+    try {
+        $users = @(
+            Get-MgGroupTransitiveMemberAsUser -GroupId $group.Id -All `
+                -Property Id,DisplayName,UserPrincipalName,Mail,AccountEnabled,UserType,OnPremisesSamAccountName,OnPremisesSyncEnabled `
+                -ErrorAction Stop
+        )
+        foreach ($user in $users) {
+            $results.Add([pscustomobject]@{
+                GroupDisplayName         = $group.DisplayName
+                GroupId                  = $group.Id
+                GroupSecurityEnabled     = $group.SecurityEnabled
+                GroupMailEnabled         = $group.MailEnabled
+                MemberObjectType         = 'User'
+                MemberDisplayName        = $user.DisplayName
+                MemberId                 = $user.Id
+                MemberUPNorAppId          = $user.UserPrincipalName
+                MemberMail               = $user.Mail
+                EntraAccountEnabled      = $user.AccountEnabled
+                UserType                 = $user.UserType
+                OnPremisesSamAccountName = $user.OnPremisesSamAccountName
+                OnPremisesSyncEnabled    = $user.OnPremisesSyncEnabled
+                MembershipResolution     = 'Transitive'
+            })
+        }
+    }
+    catch {
+        $errors.Add([pscustomobject]@{
+            GroupDisplayName = $group.DisplayName
+            GroupId = $group.Id
+            Error = $_.Exception.Message
+        })
+    }
+}
+
+$parent = Split-Path -Parent $OutputPath
+if ($parent) { New-Item -Path $parent -ItemType Directory -Force | Out-Null }
+$results | Sort-Object GroupDisplayName,MemberDisplayName,MemberUPNorAppId |
+    Export-Csv -Path $OutputPath -NoTypeInformation -Encoding utf8
+
+Write-Host "Matching groups: $($groups.Count)"
+Write-Host "Membership rows: $($results.Count)"
+Write-Host "Errors: $($errors.Count)"
+Write-Host "Report: $OutputPath" -ForegroundColor Cyan
+if ($results.Count -gt 0) {
+    $results | Select-Object GroupDisplayName,MemberDisplayName,MemberUPNorAppId,EntraAccountEnabled |
+        Format-Table -AutoSize -Wrap
+}
+if ($errors.Count -gt 0) { $errors | Format-Table -AutoSize -Wrap }
