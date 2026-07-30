@@ -3,7 +3,7 @@
   Scan every subscription for Sonrai’s “Powerful Permissions in Azure.”
 
 .DESCRIPTION
-  - Connects using device code.  
+  - Connects using the normal interactive Windows sign-in experience (WAM).  
   - Gathers your user’s role assignments per subscription.  
   - Tests each high-risk permission from the six-part Sonrai blog.  
   - Exports findings to CSV and writes colored console messages.
@@ -14,9 +14,17 @@
     - PowerShell 7+ (for colored output)
 #>
 
-# 1. Authenticate
-Write-Host "→ Authenticating to Azure (Device Code)…" -ForegroundColor Cyan
-Connect-AzAccount -UseDeviceAuthentication | Out-Null
+# 1. Authenticate using normal interactive sign-in (WAM on Windows)
+# Device-code authentication is intentionally not used.
+Write-Host "→ Authenticating to Azure (interactive sign-in)..." -ForegroundColor Cyan
+
+# Apply WAM only to this PowerShell process. This avoids changing the user's
+# persistent Az configuration and supports Conditional Access and MFA.
+if (Get-Command Update-AzConfig -ErrorAction SilentlyContinue) {
+  Update-AzConfig -EnableLoginByWam $true -Scope Process | Out-Null
+}
+
+Connect-AzAccount | Out-Null
 
 # 2. Identify current user
 $currentUpn = (Get-AzContext).Account.Id
