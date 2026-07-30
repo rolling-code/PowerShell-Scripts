@@ -132,6 +132,9 @@ Notice the PowerShell user agent given we are using API calls from PS
 Notice the MFA requirement error description, as expected.
 ![Notice the MFA requirement](Azure%20Active%20Directory/docs/image-20250514-202748.png)
 
+Use like so:
+`.\get_az_token.ps1 -TenantId "xxx" -Username "you@foo.bar" -ClientId "yyy" -AcknowledgeAuthorizedTesting`
+
 ---
 ### `aadinternals_audit6.ps1`
 
