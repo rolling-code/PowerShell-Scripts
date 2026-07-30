@@ -181,7 +181,8 @@ Sends an authorized email through Microsoft Graph using app-only client-credenti
 The Entra application must have the Microsoft Graph Mail.Send application permission with administrator consent. Because this permission can provide broad mail-sending capability, Exchange Online App RBAC should be used to restrict the application to approved sender mailboxes. An HTTP 202 Accepted response confirms that Microsoft Graph accepted the message for processing, but does not guarantee final delivery.
 
 Use like so:
-`$secureSecret = Read-Host "Enter the application client secret" -AsSecureString
+```powershell
+$secureSecret = Read-Host "Enter the application client secret" -AsSecureString
 
 $env:ENTRA_CLIENT_SECRET = [System.Net.NetworkCredential]::new(
     "",
@@ -197,7 +198,7 @@ python .\send_graph_mail.py
     --body "This is an authorized app-only Microsoft Graph email test." 
     --acknowledge-authorized-mailbox 
     --dry-run
-`
+```
 Send the message by removing --dry-run
 
 ---
