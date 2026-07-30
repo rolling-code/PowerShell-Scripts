@@ -168,6 +168,12 @@ Microsoft Graph Command Line Tools must be granted. If not you will be prompted 
 Demonstrates how a privileged Microsoft Graph administrator can programmatically create a user-specific delegated permission grant between a client service principal and Microsoft Graph, then assign the client application to the selected user. The delegated grant authorizes the application to call Microsoft Graph on behalf of that user, subject to the granted scopes and the user’s own effective permissions.
 This administrative workflow illustrates one mechanism that can be abused after a highly privileged identity or application is compromised. The script does not create a malicious application, perform consent phishing, obtain tokens, or independently bypass MFA. Because it modifies tenant consent and application assignments using highly privileged Graph permissions, it should be used only in an isolated lab or explicitly authorized administrative workflow.
 
+Use like so:
+`.\grant_consent_MSGraph.ps1  -ClientAppId "11111111-1111-1111-1111-111111111111"`
+
+`.\grant_consent_MSGraph.ps1 -UserPrincipalName "alice@contoso.com"`
+
+
 ---
 ### `sendmail.py`
 
