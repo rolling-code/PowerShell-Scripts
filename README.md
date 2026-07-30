@@ -120,22 +120,9 @@ I gathered all the Azure permissions they highlighted and wrote a PowerShell scr
 ---
 ### `get_az_token.ps1`
 
-**What a Successful Token Response Implies**
-
-If you get a token back:
-
-The app **does not require MFA** (since ROPC cannot satisfy MFA).
-
-The user is **allowed to authenticate with just username and password**.
-
-The app is **not blocked by Conditional Access** or **federation restrictions**.
- 
-
-In other words, if anything other than 400 (Bad Request) is returned it may indicate a problem.
-
-To make it easier to spot I made the output of a successful token obtainment in RED.
-
-Under https://intune.microsoft.com/ under the User's Sign-in logs (the user you specifid in the script) you can see the errors when MFA is expected but not used:
+ROPC Authentication Control Validation
+This controlled test evaluates whether a specifically authorized Microsoft Entra public-client application can obtain a token for a designated test account through the Resource Owner Password Credentials flow. Because ROPC cannot perform interactive authentication or satisfy an MFA challenge, a response such as AADSTS50076 confirms that the applicable sign-in requires MFA and blocks the legacy password-only flow.
+A successful token response indicates that the tested user, client application, resource and sign-in context were permitted to authenticate using username and password without completing MFA at the time of the test. It does not prove that Conditional Access is absent globally or that all users and applications have the same behavior. Microsoft has deprecated ROPC because it requires direct handling of user passwords and is incompatible with MFA, passwordless authentication and modern interactive controls.
 
 **Sign-in error** code `50076` in Azure AD **indicates that MFA (Multi-Factor Authentication) is required**.
 
