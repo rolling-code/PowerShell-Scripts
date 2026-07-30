@@ -177,10 +177,28 @@ Use like so:
 ---
 ### `sendmail.py`
 
-Send email impersonations, need "Mail.Send" permissions.
+Sends an authorized email through Microsoft Graph using app-only client-credentials authentication and the Mail.Send application permission. The script accepts configurable sender, recipient, subject, and message-body values, reads the application secret from an environment variable, supports a dry-run mode, and returns detailed Microsoft Graph errors without printing or storing access tokens.
+The Entra application must have the Microsoft Graph Mail.Send application permission with administrator consent. Because this permission can provide broad mail-sending capability, Exchange Online App RBAC should be used to restrict the application to approved sender mailboxes. An HTTP 202 Accepted response confirms that Microsoft Graph accepted the message for processing, but does not guarantee final delivery.
 
 Use like so:
-`python .\sendmail.py`
+`$secureSecret = Read-Host "Enter the application client secret" -AsSecureString
+
+$env:ENTRA_CLIENT_SECRET = [System.Net.NetworkCredential]::new(
+    "",
+    $secureSecret
+).Password
+
+python .\send_graph_mail.py `
+    --tenant-id "00000000-0000-0000-0000-000000000000" `
+    --client-id "11111111-1111-1111-1111-111111111111" `
+    --sender "notifications@contoso.com" `
+    --recipient "analyst@contoso.com" `
+    --subject "Microsoft Graph mail validation" `
+    --body "This is an authorized app-only Microsoft Graph email test." `
+    --acknowledge-authorized-mailbox `
+    --dry-run
+`
+Send the message by removing --dry-run
 
 ---
 ### `Get-AzureStorageAnonymousAccess.ps1`
