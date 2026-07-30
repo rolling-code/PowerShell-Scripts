@@ -30,7 +30,7 @@ PowerShell-Scripts/
 │   └── watch_X_job3.ps1
 │   └── Audit-AllUsersRolePerms.ps1
 │   └── Get-DisabledUsersLicenses.ps1
-│   └── RemoveM365LicensesfromDisabledUsers3.ps1
+│   └── RemoveM365LicensesfromDisabledUsers.ps1
 │   └── Inspect-AzWebAppSecurity-Consolidated.ps1
 │   └── Audit-NeverSucceedingMailForwardingRules.ps1
 │   └── Review-TeamsLifecycleCleanupCandidates.ps1
@@ -249,11 +249,37 @@ An optional per-user summary consolidates each disabled account’s licenses and
 ```
 
 ---
-### `RemoveM365LicensesfromDisabledUsers3.ps1`
+### `RemoveM365LicensesfromDisabledUsers.ps1`
 
-Enumerates disabled users and (by default in dry‑run) identifies and exports their assigned license names; when not in dry‑run it removes direct user licenses and logs actions.
-Prerequisites: An active Graph session (Connect-MgGraph) with User.ReadWrite.All and Directory.ReadWrite.All consent, Microsoft Graph PowerShell modules installed, sufficient admin rights to change licenses
+Audits disabled Microsoft Entra users with effective license assignments and exports detailed license-source and action-summary reports. The script distinguishes directly assigned licenses from group-based licensing and operates in audit-only mode by default. Direct licenses can be removed only through the explicit -Execute switch, with support for approved-user CSV input, targeted UPNs, -WhatIf, confirmation prompts, and detailed action logging. Reuses the current Microsoft Graph PowerShell session and does not request new consent automatically.
 
+Audit Mode
+```powershell
+# Reuse an existing Microsoft Graph session.
+Connect-MgGraph -Scopes "User.Read.All", "Organization.Read.All" -NoWelcome
+
+# Audit all disabled licensed member accounts.
+# No licenses are removed.
+.\RemoveM365LicensesfromDisabledUsers.ps1
+```
+
+Removal Mode
+```powershell
+# Reuse an existing Microsoft Graph session with license-management permission.
+Connect-MgGraph -Scopes "User.Read.All", "Organization.Read.All", "LicenseAssignment.ReadWrite.All" -NoWelcome
+
+# Preview the removal of directly assigned licenses from users
+# listed in a reviewed CSV. No licenses are removed with -WhatIf.
+.\RemoveM365LicensesfromDisabledUsers.ps1 `
+    -ApprovedUsersCsv ".\approved-users.csv" `
+    -Execute `
+    -WhatIf
+
+# After reviewing the preview, remove -WhatIf to execute.
+.\RemoveM365LicensesfromDisabledUsers.ps1 `
+    -ApprovedUsersCsv ".\approved-users.csv" `
+    -Execute
+```
 
 
 
