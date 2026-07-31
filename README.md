@@ -291,13 +291,13 @@ Enumerates all Microsoft Entra application registrations and enterprise applicat
 
 The three scripts now have separated purposes:
 
-BulkMultiPermExploitability.ps1
+**BulkMultiPermExploitability.ps1**
 Finds high-risk application and delegated permissions across the inventory.
 
-Profile-App.ps1
+**Profile-App.ps1**
 Creates a complete governance profile for one application.
 
-Audit-AppDelegationRisks.ps1
+**Audit-AppDelegationRisks.ps1**
 Performs a focused delegated-consent risk assessment for one application.
 
 
