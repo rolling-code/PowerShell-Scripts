@@ -309,9 +309,13 @@ The recommended input for this permission review is: entra-application-registrat
 
 ### `Profile-App.ps1`
 - **Purpose:** Profiles a single AppId in detail.  
-- **Output Includes:** Owners, credentials, delegated/app‑only permissions, assignments, and recent sign‑ins.  
-- **Use Case:** Produces a **governance‑ready profile** for documentation, incident response, or app reviews.  
-- **Frequency:** Run **ad‑hoc** during investigations, risk reviews, or onboarding/offboarding of third‑party apps.  
+Creates a governance-ready profile for a single Microsoft Entra application using its application client ID.
+Output includes:
+Application registration and service principal metadata, owners, password and certificate credential metadata, application permissions, delegated OAuth consent grants, enterprise application assignments, interactive sign-ins, service principal sign-ins, and data-availability warnings.
+Run ad hoc when investigating findings from BulkMultiPermExploitability.ps1, reviewing a privileged integration, validating an application owner, or assessing an application before remediation.
+```powershell
+.\Profile-App.ps1 -TargetAppId "xxx"
+```
 
 ### `Audit-AppDelegationRisks.ps1`
 - **Purpose:** Focuses on delegated OAuth2 grants. Profiles a single service principal to audit delegated permission grants and identify high‑risk delegated scopes (e.g., mail, calendars, device management).
