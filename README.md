@@ -289,6 +289,18 @@ Connect-MgGraph -Scopes "User.Read.All", "Organization.Read.All", "LicenseAssign
 ### `list_all_applications.ps1`
 Enumerates all Microsoft Entra application registrations and enterprise application service principals visible to the current Microsoft Graph session. Exports separate application and service-principal reports, plus a normalized combined CSV inventory. Reuses an existing Graph session by default and supports optional interactive connection using Application.Read.All.
 
+The three scripts now have separated purposes:
+
+BulkMultiPermExploitability.ps1
+Finds high-risk application and delegated permissions across the inventory.
+
+Profile-App.ps1
+Creates a complete governance profile for one application.
+
+Audit-AppDelegationRisks.ps1
+Performs a focused delegated-consent risk assessment for one application.
+
+
 ### `BulkMultiPermExploitability.ps1`
 BulkMultiPermExploitability.ps1 reviews Microsoft Entra applications for granted Microsoft Graph permissions that match a configurable high-risk permission catalog.
 The script evaluates both:
@@ -318,19 +330,18 @@ Run ad hoc when investigating findings from BulkMultiPermExploitability.ps1, rev
 ```
 
 ### `Audit-AppDelegationRisks.ps1`
-- **Purpose:** Focuses on delegated OAuth2 grants. Profiles a single service principal to audit delegated permission grants and identify high‑risk delegated scopes (e.g., mail, calendars, device management).
-- **Use Case:** Flags **tenant‑wide consents** with risky scopes and resolves who can access the app.  
-- **Frequency:** Run **ad‑hoc** when reviewing suspicious or high‑risk apps.  
+Audits delegated OAuth consent grants for a single Microsoft Entra application, expands each granted scope into an individual record, and identifies high-impact delegated permissions using a built-in or caller-supplied risk catalog.
 
-All scripts rely on the **[Microsoft.Graph PowerShell SDK](https://learn.microsoft.com/powershell/microsoftgraph/overview)**  
-Before running the scripts, establish a Graph session with sufficient rights:
+Identifies tenant-wide AllPrincipals consent, privileged delegated scopes, missing ownership, and principals assigned to access an enterprise application. Intended for evidence-driven application reviews, consent investigations, and least-privilege validation.
+
+Run ad hoc when investigating suspicious applications, validating findings from BulkMultiPermExploitability.ps1, or reviewing privileged third-party integrations.
+
 ```powershell
 .\list_all_applications.ps1 //Generates CSV files
 
 .\BulkMultiPermExploitability.ps1 -ScopeCsvPath ScopeBreakdown.csv //This parses previously generated CSV file
 ```
 
-When you see "Problem!" this is how you dig deeper into the app details
 ```powershell
 .\Profile-App.ps1 -TargetAppId dddddd-ba25-43c7-a710-cxxxx
 
