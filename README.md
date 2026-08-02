@@ -397,16 +397,6 @@ For the OAuth flows that reach GitHub Pages, a real application registration and
 | Direct page preview | The GitHub Pages URL may be opened directly before creating the application. | Direct access is a **visual preview only**. It shows what the destination page will look like, but it does not validate the application, create an OAuth request, grant permissions, or complete an OAuth flow. | **[OPEN THIS URL TO PREVIEW THE PAGE](https://rolling-code.github.io/PowerShell-Scripts/oauth-training-success.html)** |
 | Complete authorized simulation | Combine an application **registered in the user's own tenant**, its actual client ID, the correct tenant context, and the exact registered GitHub Pages redirect URI. | This is not a simple copy-and-paste operation. The application and callback URL must be intentionally configured together by the authorized tester or simulation administrator. | Complete the simulation only after confirming that the client ID, tenant, redirect URI, GitHub Pages URL, and relevant script parameters all refer to the same configured application. |
 
-> [!IMPORTANT]
-> **OPEN the GitHub Pages URL directly to preview the destination page:**  
-> https://rolling-code.github.io/PowerShell-Scripts/oauth-training-success.html
->
-> Opening the page directly is a visual preview only. A functional OAuth flow still requires an application **registered in the user's own tenant**, an actual client ID from that application, and the exact GitHub Pages URL registered as its redirect URI.
-
-> [!NOTE]
-> If GitHub Pages displays a **Page not found** response, the HTML file may not yet be published at that exact repository path, GitHub Pages may still be deploying, or the filename and capitalization may not match the published file. GitHub Pages paths are case-sensitive.
-
-
 ### `New-MultiTenantOAuthConsentTrainingUrl.ps1`
 
 Generates a constrained Microsoft identity platform authorization URL for an operator-owned, multi-tenant Microsoft Entra application.
