@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+  <title>Multi-tenant OAuth consent training</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0f172a;--panel:#1e293b;--accent:#38bdf8;--warn:#fbbf24;--text:#f8fafc;--muted:#cbd5e1}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font:17px/1.6 "Segoe UI",Arial,sans-serif}
+    header{padding:1.25rem;text-align:center;background:var(--panel);color:var(--accent);font-weight:700;font-size:1.25rem}
+    main{max-width:760px;margin:3rem auto;padding:2rem;background:var(--panel);border-radius:12px;box-shadow:0 8px 24px #0008}
+    h1,h2{color:var(--accent)} .notice{padding:1rem;border-left:5px solid var(--warn);background:#422006;color:#fef3c7;border-radius:6px}
+    footer{text-align:center;color:var(--muted);padding:1rem} li{margin:.45rem 0}
+  </style>
+</head>
+<body>
+<header>OAuth consent security awareness training</header>
+<main>
+  <h1>Multi-tenant application scenario</h1>
+  <p class="notice"><strong>Controlled training page.</strong> This page does not collect credentials, authorization codes, tokens, query strings, analytics, or personal data.</p>
+  <p>You reached a training page after reviewing a consent request from an application configured for users in multiple organizations.</p>
+  <h2>What this demonstrates</h2>
+  <ul>
+    <li>An application can be registered in one tenant and presented to users in another tenant.</li>
+    <li>The Microsoft-hosted sign-in and consent interface is genuine, while the requesting application remains independently controlled.</li>
+    <li>Publisher identity, tenant context, and requested permissions must all be reviewed.</li>
+    <li>Unexpected requests should be cancelled even when the sign-in domain is legitimate.</li>
+  </ul>
+  <h2>Safe response</h2>
+  <p>Approve only recognized applications whose publisher and requested access align with an authorized business purpose.</p>
+</main>
+<footer>Controlled OAuth awareness demonstration</footer>
+</body>
+</html>
