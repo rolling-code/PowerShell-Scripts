@@ -43,9 +43,9 @@ PowerShell-Scripts/
         Profile-App.ps1
         Audit-AppDelegationRisks.ps1
 │   └── 👉** automate creation of malicious-looking OAuth authorization flows (device‑code and consent URLs) used in consent‑phishing simulations **
-│       generate_oauth_phishing_url_pwnd2.ps1
-│       generate_oauth_phishing_url_MS_App2.ps1
-│       generate_oauth_phishing_url2.ps1
+│       New-MultiTenantOAuthConsentTrainingUrl.ps1
+│       New-OAuthRedirectMismatchTrainingUrl.ps1
+│       New-OrgOnlyOAuthConsentTrainingUrl.ps1
 
 ## ── 📂 ├── On-Prem Active Directory/
 │   └── ad_object_permissions3.ps1 (uses ActiveDirectory module (ADWS))
@@ -357,21 +357,77 @@ Performs a tenant-wide, read-only audit of Microsoft Entra default user permissi
 ```
 
 ---
-👉** automate creation of malicious-looking OAuth authorization flows (device‑code and consent URLs) used in consent‑phishing simulations **
+👉 **OAuth consent and application trust awareness demonstrations**
 
-### `generate_oauth_phishing_url_pwnd2.ps1`
+These scripts generate controlled Microsoft Entra OAuth authorization URLs for authorized security-awareness training and application-trust validation.
 
-Produces preconfigured phishing payloads and tracking for “pwnd” style scenarios where the script automates the device‑code flow lifecycle (create code, deliver to victim, poll for token).
+Together, they demonstrate three distinct scenarios:
+
+- An organization-only application registered in the user's tenant
+- An intentionally invalid redirect URI rejected by Microsoft Entra
+- A multi-tenant application that can present a consent request across organizational boundaries
+
+The scripts construct authorization URLs only. They do not create or modify application registrations, deliver links, open browsers, exchange authorization codes, acquire tokens, or access user data.
+
+| Scenario | Script | Purpose | Expected result | Associated training page |
+|---|---|---|---|---|
+| Organization-only application | `New-OrgOnlyOAuthConsentTrainingUrl.ps1` | Demonstrates consent from an application registered in the user's own tenant | Microsoft consent screen followed by the organization-only training page | https://rolling-code.github.io/PowerShell-Scripts/oauth-training-success.html |
+| Redirect mismatch | `New-OAuthRedirectMismatchTrainingUrl.ps1` | Demonstrates that Microsoft Entra strictly validates registered redirect URIs | Microsoft Entra rejects the request with `AADSTS50011` | None. The Microsoft Entra error page is the intended training result |
+| Multi-tenant application | `New-MultiTenantOAuthConsentTrainingUrl.ps1` | Demonstrates how an application registered in one tenant can request consent from users in another organization | Microsoft consent screen followed by the multi-tenant training page | https://rolling-code.github.io/PowerShell-Scripts/oauth-training-multitenant.html |
+
+
+### `New-MultiTenantOAuthConsentTrainingUrl.ps1`
+
+Generates a constrained Microsoft identity platform authorization URL for an operator-owned, multi-tenant Microsoft Entra application.
+ 
+The scenario demonstrates how an application registered in one tenant can present a Microsoft-hosted sign-in and consent request to users in another organization. It emphasizes the importance of validating the application publisher, tenant context, requested permissions, and expected business purpose.
+ 
+The application and redirect URI must already be configured by the authorized operator. The script does not create or modify application registrations, deliver the URL, open a browser, exchange authorization codes, acquire tokens, or access user data.
+
+```powershell
+.\New-MultiTenantOAuthConsentTrainingUrl.ps1 `
+    -ClientId "11111111-1111-1111-1111-111111111111" `
+    -Authority "organizations" `
+    -RedirectUri "https://rolling-code.github.io/PowerShell-Scripts/oauth-training-multitenant.html" `
+    -CopyToClipboard `
+    -AcknowledgeAuthorizedTraining
+```
 
 ---
-### `generate_oauth_phishing_url_MS_App2.ps1`
+### `New-OAuthRedirectMismatchTrainingUrl.ps1`
 
-Builds phishing URLs that impersonate or reuse Microsoft‑branded client IDs and scopes to make the consent prompt appear legitimate.
+Generates an OAuth authorization URL containing an intentionally unregistered redirect URI to demonstrate Microsoft Entra redirect URI validation. 
+
+The expected result is an `AADSTS50011` error from Microsoft Entra. This teaches that a familiar application name or genuine Microsoft-hosted sign-in page cannot override the redirect URIs registered on an application. 
+
+The demonstration requires an application registration owned by the operator or explicitly authorized for testing. It does not use a Microsoft-owned client ID, modify the application, acquire tokens, or redirect to a custom training page.
+
+```powershell
+.\New-OAuthRedirectMismatchTrainingUrl.ps1 `
+    -TenantId "00000000-0000-0000-0000-000000000000" `
+    -ClientId "11111111-1111-1111-1111-111111111111" `
+    -IntentionallyUnregisteredRedirectUri "https://example.invalid/not-registered" `
+    -CopyToClipboard `
+    -AcknowledgeAuthorizedTraining
+```
 
 ---
-### `generate_oauth_phishing_url2.ps1`
+### `New-OrgOnlyOAuthConsentTrainingUrl.ps1`
 
-Generates OAuth device‑code or authorization URLs and associated tracking artifacts that an attacker could deliver to a target to induce them to approve an OAuth consent prompt.
+Generates a constrained, tenant-specific Microsoft identity platform authorization URL for an organization-only OAuth consent-awareness demonstration. 
+
+The scenario shows how an application registered in the user's own Microsoft Entra tenant can present a genuine Microsoft consent screen. It teaches participants to validate the application publisher, requested permissions, and expected business purpose rather than trusting the sign-in page or application name alone. 
+
+The application and redirect URI must already be configured by the authorized operator. The script does not create or modify the application registration, deliver the URL, open a browser, exchange authorization codes, acquire tokens, or access user data.
+
+```powershell
+.\New-OrgOnlyOAuthConsentTrainingUrl.ps1 `
+    -TenantId "00000000-0000-0000-0000-000000000000" `
+    -ClientId "11111111-1111-1111-1111-111111111111" `
+    -RedirectUri "https://rolling-code.github.io/PowerShell-Scripts/oauth-training-success.html" `
+    -CopyToClipboard `
+    -AcknowledgeAuthorizedTraining
+```
 
 ---
 ### `watch_X_job3.ps1`
