@@ -369,12 +369,42 @@ Together, they demonstrate three distinct scenarios:
 
 The scripts construct authorization URLs only. They do not create or modify application registrations, deliver links, open browsers, exchange authorization codes, acquire tokens, or access user data.
 
-| Scenario | Script | Purpose | Expected result | Associated training page |
-|---|---|---|---|---|
-| Organization-only application | `New-OrgOnlyOAuthConsentTrainingUrl.ps1` | Demonstrates consent from an application registered in the user's own tenant | Microsoft consent screen followed by the organization-only training page | https://rolling-code.github.io/PowerShell-Scripts/oauth-training-success.html |
-| Redirect mismatch | `New-OAuthRedirectMismatchTrainingUrl.ps1` | Demonstrates that Microsoft Entra strictly validates registered redirect URIs | Microsoft Entra rejects the request with `AADSTS50011` | None. The Microsoft Entra error page is the intended training result |
-| Multi-tenant application | `New-MultiTenantOAuthConsentTrainingUrl.ps1` | Demonstrates how an application registered in one tenant can request consent from users in another organization | Microsoft consent screen followed by the multi-tenant training page | https://rolling-code.github.io/PowerShell-Scripts/oauth-training-multitenant.html |
+Application Registration and Redirect URI Requirements
 
+The GitHub Pages examples can be opened immediately to preview the user-facing simulation pages. However, previewing a page is not the same as completing its OAuth flow.
+
+For the OAuth flows that reach GitHub Pages, a real application registration and an exact registered redirect URI are mandatory. The application and the GitHub Pages URL are therefore intertwined:
+
+The application must be registered in the simulation administrator’s own tenant.
+OAuth parameters such as the client ID must come from that application registration.
+The corresponding GitHub Pages callback URL must be entered as an authorized redirect URI on that same application.
+The redirect URI supplied during authorization must exactly match the registered value.
+Reusing another organization’s client ID or copying only the example URL will not produce a functional OAuth flow.
+
+
+## Application Registration, Redirect URI, and Page Relationship
+
+For the OAuth flows that reach GitHub Pages, a real application registration and an exact registered redirect URI are mandatory. The application registration, client ID, tenant, authorization URL, and GitHub Pages callback URL must be configured as one matching set.
+
+| Component | Required configuration | Relationship to the application and URL | Preview or validation |
+|---|---|---|---|
+| Application registration | Create an application **registered in the user's own tenant**, meaning a tenant where the authorized tester or simulation administrator can create and configure applications. | The application provides the client ID used by the OAuth authorization request. Copying the generic examples does not create or register this application automatically. | Confirm that the application appears under **Microsoft Entra ID > App registrations** in the tenant used for the authorized simulation. |
+| Tenant context | Use a tenant controlled by the authorized tester or simulation administrator. The application must be **registered in one tenant** before its client ID can be used in the OAuth flow. | The tenant determines where the application exists, which identity provider processes the request, and which application configuration is evaluated. | Confirm that the tenant used in the authorization URL is the tenant where the application was registered. |
+| Client ID | Replace the generic client ID placeholder with the Application (client) ID generated for the newly registered application. | The client ID identifies the application whose redirect URI configuration Microsoft Entra ID will validate. A client ID copied from an example or another organization is not interchangeable with an application registered in the operator's tenant. | Compare the client ID in the generated authorization URL with the Application (client) ID shown in the application's Overview page. |
+| Registered redirect URI | Add `https://rolling-code.github.io/PowerShell-Scripts/oauth-training-success.html` as a redirect URI on the same application identified by the client ID. | The redirect URI supplied in the OAuth request must exactly match the URI registered on that application. The application and URL are therefore directly intertwined. | Confirm that the complete URL, including `https://`, capitalization, path, filename, and `.html` extension, exactly matches the redirect URI configured on the application. |
+| GitHub Pages callback page | The simulation uses `https://rolling-code.github.io/PowerShell-Scripts/oauth-training-success.html` as its GitHub Pages destination. | This page is the destination reached after the identity provider processes the request. Publishing or opening the page does not automatically create the required application registration. | **[OPEN THIS URL](https://rolling-code.github.io/PowerShell-Scripts/oauth-training-success.html)** to preview what the page will look like once the application is created and correctly configured. |
+| OAuth authorization URL | The applicable PowerShell script constructs the authorization URL by combining the tenant context, client ID, requested permissions, and registered GitHub Pages redirect URI. | All values must belong to the same authorized simulation. Changing the client ID, tenant, or callback URL without updating the corresponding application registration breaks the relationship. | Inspect the generated authorization URL and verify that its client ID and redirect URI match the application registration. |
+| Direct page preview | The GitHub Pages URL may be opened directly before creating the application. | Direct access is a **visual preview only**. It shows what the destination page will look like, but it does not validate the application, create an OAuth request, grant permissions, or complete an OAuth flow. | **[OPEN THIS URL TO PREVIEW THE PAGE](https://rolling-code.github.io/PowerShell-Scripts/oauth-training-success.html)** |
+| Complete authorized simulation | Combine an application **registered in the user's own tenant**, its actual client ID, the correct tenant context, and the exact registered GitHub Pages redirect URI. | This is not a simple copy-and-paste operation. The application and callback URL must be intentionally configured together by the authorized tester or simulation administrator. | Complete the simulation only after confirming that the client ID, tenant, redirect URI, GitHub Pages URL, and relevant script parameters all refer to the same configured application. |
+
+> [!IMPORTANT]
+> **OPEN the GitHub Pages URL directly to preview the destination page:**  
+> https://rolling-code.github.io/PowerShell-Scripts/oauth-training-success.html
+>
+> Opening the page directly is a visual preview only. A functional OAuth flow still requires an application **registered in the user's own tenant**, an actual client ID from that application, and the exact GitHub Pages URL registered as its redirect URI.
+
+> [!NOTE]
+> If GitHub Pages displays a **Page not found** response, the HTML file may not yet be published at that exact repository path, GitHub Pages may still be deploying, or the filename and capitalization may not match the published file. GitHub Pages paths are case-sensitive.
 
 
 ### `New-MultiTenantOAuthConsentTrainingUrl.ps1`
