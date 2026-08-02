@@ -27,7 +27,7 @@ PowerShell-Scripts/
 │   └── Check-AllPowerfulAzurePerms3.ps1
 │   └── enum_entra_admins.ps1
 │   └── find_disabled_accounts.ps1
-│   └── watch_X_job3.ps1
+│   └── Watch-AzAutomationRunbookJob.ps1
 │   └── Audit-AllUsersRolePerms.ps1
 │   └── Get-DisabledUsersLicenses.ps1
 │   └── RemoveM365LicensesfromDisabledUsers.ps1
@@ -451,19 +451,36 @@ The application and redirect URI must already be configured by the authorized op
 ```
 
 ---
-### `watch_X_job3.ps1`
-Using Azure Hybrif Workers? Keep an eye on your Runbook without cikickety-clicking the portal.
-Will print out the Runbook logs.
+#### Watch-AzAutomationRunbookJob.ps1
 
+Monitors an existing Azure Automation runbook job, periodically reports its current state, and displays newly available Output, Verbose, Warning, Error, or Progress stream records until the job reaches a terminal state.
+
+The script can monitor a supplied job ID or automatically select the most recent job for a specified runbook. It reuses the current Azure PowerShell context by default and does not start, stop, suspend, or modify Azure Automation jobs.
+
+Monitor the latest runbook job
 ```powershell
-.\watch_X_job3.ps1 -ResourceGroupName 'XXX-Hybrid-Automation'  -AutomationAccountName 'XXX-Cybersecurity-Automation' -RunbookName pwned
+.\Watch-AzAutomationRunbookJob.ps1 `
+    -ResourceGroupName "rg-automation" `
+    -AutomationAccountName "aa-security-operations" `
+    -RunbookName "Invoke-SecurityValidation"
 ```
-or
+Monitor a specific job and all streams
 ```powershell
-$job = Start-AzAutomationRunbook  -ResourceGroupName 'XXX-Hybrid-Automation'  -AutomationAccountName 'XXX-Cybersecurity-Automation'  -Name 'pwned'  -RunOn 'xxxGroup'
+.\Watch-AzAutomationRunbookJob.ps1 `
+    -ResourceGroupName "rg-automation" `
+    -AutomationAccountName "aa-security-operations" `
+    -RunbookName "Invoke-SecurityValidation" `
+    -JobId "00000000-0000-0000-0000-000000000000" `
+    -Streams Any `
+    -PollSeconds 10
 ```
+Permit interactive authentication when required
 ```powershell
-.\watch_X_job3.ps1 -ResourceGroupName 'XXX-Hybrid-Automation'  -AutomationAccountName 'XXX-Cybersecurity-Automation' -RunbookName pwned -JobId $job.JobId
+.\Watch-AzAutomationRunbookJob.ps1 `
+    -ResourceGroupName "rg-automation" `
+    -AutomationAccountName "aa-security-operations" `
+    -RunbookName "Invoke-SecurityValidation" `
+    -AllowInteractiveLogin
 ```
 
 ---
