@@ -376,6 +376,7 @@ The scripts construct authorization URLs only. They do not create or modify appl
 | Multi-tenant application | `New-MultiTenantOAuthConsentTrainingUrl.ps1` | Demonstrates how an application registered in one tenant can request consent from users in another organization | Microsoft consent screen followed by the multi-tenant training page | https://rolling-code.github.io/PowerShell-Scripts/oauth-training-multitenant.html |
 
 
+
 ### `New-MultiTenantOAuthConsentTrainingUrl.ps1`
 
 Generates a constrained Microsoft identity platform authorization URL for an operator-owned, multi-tenant Microsoft Entra application.
