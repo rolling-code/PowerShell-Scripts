@@ -350,8 +350,7 @@ Run ad hoc when investigating suspicious applications, validating findings from 
 
 ### `Audit-AllUsersRolePerms.ps1`
 
-Tenant-wide audit of default user role permissions, privileged directory roles,  and high-privilege Azure RBAC assignments—highlighting only users who exceed the locked-down defaults.
-Must have Graph API permissions Policy.Read.All to use this script
+Performs a tenant-wide, read-only audit of Microsoft Entra default user permissions, active directory-role assignments, and high-privilege Azure RBAC access. Expands role-assignable and Azure RBAC groups into effective user privilege paths, distinguishes direct from group-derived assignments, and generates timestamped findings, evidence, coverage, warning, and governance reports.
 
 ```powershell
 .\Audit-AllUsersRolePerms.ps1
