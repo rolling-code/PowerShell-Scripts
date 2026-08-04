@@ -581,12 +581,12 @@ The script does **not** block, delete, or modify users.
 
 ## ── 📂 Section: On-Prem Active Directory ──
 ---
-### `ad_object_permissions3.ps1`
+### `Get-AdPrincipalPermissions.ps1`
 
-Audits Active Directory permissions for a given user and all the groups they belong to, within a specified LDAP container. It reports every Access Control Entry (ACE) that grants the user or their groups any rights on objects under the search base.
+Audits Active Directory ACEs that apply to a user through direct and nested security-group membership beneath a specified LDAP search base. Reports effective principals, rights, inheritance, scoped object types, and risk context, with optional CSV export for further review.
 
 ```powershell
-.\ad_object_permissions3.ps1 -Username "XXX\mcontestabile" -Domain "DC=YYYYYY,DC=net"
+.\Get-AdPrincipalPermissions.ps1 -Username "XXX\mcontestabile" -Domain "DC=YYYYYY,DC=net"
 ```
 
 Each row in the output indicates a single permission grant:
