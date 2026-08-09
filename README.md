@@ -37,6 +37,7 @@ PowerShell-Scripts/
 │   └── Report-InactiveGuestUsers-150Days.ps1
 │   └── Get-AzureStorageAnonymousAccess.ps1
 │   └── Test-AzureBlobAnonymousEndpoints.ps1
+│   └── Test-EntraTokenProtectionPolicies.ps1
 │   └── 👉** Azure AD application auditing tools **
         list_all_applications.ps1
         BulkMultiPermExploitability.ps1
@@ -578,6 +579,25 @@ The script does **not** block, delete, or modify users.
 ```powershell
 .\Report-InactiveGuestUsers-150Days.ps1
 ```
+
+---
+### `Test-EntraTokenProtectionPolicies.ps1`
+
+Read-only PowerShell audit script that retrieves Microsoft Entra Conditional Access policies through an existing Azure CLI session and evaluates whether Token Protection is configured.
+
+The script identifies:
+
+Native Token Protection for supported Windows applications accessing Exchange Online, SharePoint Online, Microsoft Teams, Azure Virtual Desktop, or Windows 365.
+Browser-based Token Protection Preview for supported web applications accessing Azure Resource Manager.
+Policies with enabled but incomplete or nonstandard Token Protection targeting.
+Conditional Access policies without Token Protection.
+
+```powershell
+.\Test-EntraTokenProtectionPolicies.ps1
+```
+
+
+
 
 ## ── 📂 Section: On-Prem Active Directory ──
 ---
