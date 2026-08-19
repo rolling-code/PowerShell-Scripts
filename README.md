@@ -73,13 +73,6 @@ PowerShell-Scripts/
 │   └── CheckWritableAttributesADUsers.ps1 (is the PowerShell equivalent of Python file above)
 │   └── Test-ADDnsLowPrivWrite.ps1
 
-## ── 📂 ├── MSADPT/
-│   └── MSADPT_start2.ps1
-│   └── MSADPT_enumerate_dc2.ps1
-│   └── MSADPT_enumerate_shares2.ps1
-│   └── MSADPT_scan_network2.ps1
-│   └── MSADPT_audit_adcs_esc1_esc16.ps1
-│   └── MSADPT_M365_DirectOAuth_ContentGrabber_V2.ps1
 └── README.md
 ```
 
@@ -606,7 +599,7 @@ Conditional Access policies without Token Protection.
 Audits Active Directory ACEs that apply to a user through direct and nested security-group membership beneath a specified LDAP search base. Reports effective principals, rights, inheritance, scoped object types, and risk context, with optional CSV export for further review.
 
 ```powershell
-.\Get-AdPrincipalPermissions.ps1 -Username "XXX\mcontestabile" -Domain "DC=YYYYYY,DC=net"
+.\Get-AdPrincipalPermissions.ps1 -Username "XXX\analyst" -Domain "DC=YYYYYY,DC=net"
 ```
 
 ## Understanding the output
@@ -652,7 +645,7 @@ Always evaluate:
 Audits explicit ACLs for a single account under a given AD container. It dumps every Access Control Entry (ACE) on objects beneath your search base where the ACE’s IdentityReference exactly matches the provided username.
 
 ```powershell
-.\delegated_rights.ps1 -Username "XXX\mcontestabile" -Domain "DC=YYYYYY,DC=net"
+.\delegated_rights.ps1 -Username "XXX\analyst" -Domain "DC=YYYYYY,DC=net"
 ```
 
 ---
@@ -711,7 +704,7 @@ Finds enabled Active Directory users inactive for a specified number of days (de
 
 Supply values for the following parameters:
 LdapServer: xxx.yyy.net
-UserUPN: mcontestabile@yyy.net
+UserUPN: analyst@yyy.net
 Password: *************
 
 ---
@@ -751,7 +744,7 @@ Identifies which AD objects include access control entries (ACEs) granting the t
 Provides a controlled way to disable Kerberos pre-authentication for an Active Directory user by flipping a single bit in their userAccountControl attribute. It also gives you clear visibility into which flags are set on that user object both before and after the change. Modifying the userAccountControl attribute in Active Directory isn’t something a standard domain user can do by default. You'll get "Exception calling "SetInfo" with "0" argument(s): "Access is denied."
 
 ```powershell
-.\setNoPreauth.ps1 "LDAP://CN=Mario Contestabile,OU=blahblah,OU=bloop,DC=xxx,DC=yyy"
+.\setNoPreauth.ps1 "LDAP://CN=Example User,OU=blahblah,OU=bloop,DC=xxx,DC=yyy"
 ```
 
 ---
@@ -830,7 +823,7 @@ The Python svcript uses strictly LDAP3 to enumerate the AD users (use the -dc-ip
 Then it will attempt to write "temp" to attributes to determine if any is writeable.
 Although not the most elegent solution - it works! It will write a users.cvs file, which should only contain your own AD account-any others are worhty of ivestigation!
 ```powershell
-python3 CheckWritableAttributesADUsers.py DOMAIN/mcontestabile:'XXX' -dc-ip 1.2.3.4
+python3 CheckWritableAttributesADUsers.py DOMAIN/analyst:'XXX' -dc-ip 1.2.3.4
 ```
 
 The PowerShell version does the same thing - but with a twist.
@@ -940,7 +933,7 @@ Disables Windows Defender Services. Need to run as admin.
 
 If you want to automatically do so after every reboot & login event, run this PowerSHell to create a Scheduled Task which will run that .ps1 for you under SYSTEM.
 ```powershell
-$Action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\Users\mcontestabile\DisableWindowsDefender.ps1"'
+$Action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\Users\analyst\DisableWindowsDefender.ps1"'
 $Triggers = @(
   New-ScheduledTaskTrigger -AtStartup
   New-ScheduledTaskTrigger -AtLogOn
@@ -1017,7 +1010,6 @@ Run lookup.ps1
 ## ── 📂 Section: MSADPT ──
 ---
 
-### `MSADPT_start2.ps1`
 This script requires all input to be provided through command-line parameters.
 
 It uses the supplied domain credential, target domain FQDN, and bootstrap Active Directory server to collect environment, Domain Controller, and ADCS discovery information.
@@ -1065,7 +1057,6 @@ The results are written to CSV output files.
 ## Example Usage
 
 ```powershell
-.\MSADPT_start2.ps1 -Credential (Get-Credential) `
     -DomainFQDN "foo.bar" `
     -EnvironmentOutputCsvPath "C:\temp\MSADPT_Output\MSADPT_Environment_20260427.csv" `
     -DCOutputCsvPath "C:\temp\MSADPT_Output\MSADPT_DCs_20260427.csv" `
@@ -1073,7 +1064,6 @@ The results are written to CSV output files.
     -AdServer "DC1.foo.bar"
 ```
 
-### `MSADPT_enumerate_dc2.ps1`
 
 This script enumerates details from Domain Controllers that were previously discovered by the MSADPT discovery/start script.
 
@@ -1120,7 +1110,6 @@ The script does not assume that the host running it is domain joined.
 ## Example Usage
 
 ```powershell
-.\MSADPT_enumerate_dc2.ps1 `
     -InputDcCsvPath "C:\temp\MSADPT_Output\MSADPT_DCs.csv" `
     -OutputBaseDir "C:\temp\MSADPT_Output\DC_Enumeration" `
     -Credential (Get-Credential) `
@@ -1128,7 +1117,6 @@ The script does not assume that the host running it is domain joined.
     -AdServer "DC1.foo.bar"
 ```
 
-### `MSADPT_enumerate_shares2.ps1`
 
 This script enumerates network shares on previously discovered Domain Controllers and prepares per-DC output locations for share enumeration results.
 
@@ -1171,13 +1159,11 @@ The script does not assume that the host running it is domain joined.
 ## Example Usage
 
 ```powershell
-.\MSADPT_enumerate_shares2.ps1 `
     -InputDcCsvPath "C:\temp\MSADPT_Output\MSADPT_DCs.csv" `
     -OutputBaseDir "C:\temp\MSADPT_Output\Shares" `
     -Credential (Get-Credential)
 ```
 
-### `MSADPT_scan_network2.ps1`
 
 This script performs explicit network discovery and service checks against one or more operator-supplied IPv4 target ranges.
 
@@ -1232,7 +1218,6 @@ The script can optionally attempt to use `nmap` if it is available in `PATH`, an
 ## Example Usage
 
 ```powershell
-.\MSADPT_scan_network2.ps1 `
     -Credential (Get-Credential) `
     -NetworkRanges "10.10.10.0/24","10.20.30.10-10.20.30.20" `
     -CommonPorts 445,3389,5985 `
@@ -1244,7 +1229,6 @@ The script can optionally attempt to use `nmap` if it is available in `PATH`, an
     -OutputSmbSigningCsvPath "C:\temp\MSADPT_Output\MSADPT_SMBSigning_Status.csv"
 ```
 
-### `MSADPT_audit_adcs_esc1_esc16.ps1`
 
 This script performs a defensive, configuration-focused audit of an Active Directory Certificate Services (AD CS) deployment for likely exposure indicators associated with ESC1 through ESC16.
 
@@ -1295,7 +1279,6 @@ The script does not exploit anything, request or forge certificates, or modify t
 ```powershell
 $cred = Get-Credential
 
-.\MSADPT_audit_adcs_esc1_esc16.ps1 `
     -DirectoryServer "DC1.foo.bar" `
     -Credential $cred `
     -OutputBaseDir "C:\temp\MSADPT_Output\ADCS" `
@@ -1303,7 +1286,6 @@ $cred = Get-Credential
     -SkipRemoteChecks:$false
 ```
 
-### `MSADPT_M365_DirectOAuth_ContentGrabber_V2.ps1`
 
 Add M365 Direct OAuth device-code validation helper for approved tabletop and lab scenarios.
 
@@ -1311,3 +1293,10 @@ This script demonstrates how Graph-scoped device-code authentication differs fro
 
 
 
+
+
+## MSADPT
+
+MSADPT has moved to its own repository. Installation, usage, architecture, modules, and release documentation are maintained at:
+
+https://github.com/rolling-code/MSADPT
