@@ -15,7 +15,7 @@ PowerShell-Scripts/
 │   └── kickoff.ps1
 │   └── SetAdaptorMetricWired_Highest.ps1
 │   └── Check-ModularDS.ps1
-│   └── crt_enum.ps1
+│   └── .ps1
 │   └── rmm_nrpt_block.ps1
 
 ## ── 📂 ├── Azure Active Directory/
@@ -964,7 +964,15 @@ https://modulards.com/a-note-on-the-recent-modular-ds-security-update/
 ---
 ### `crt_enum.ps1`
 
-Performs automated subdomain discovery and service enumeration by ingesting a CSV file and extracting domain names specifically from the Asset Name column, then querying the certificate transparency database at crt.sh using its JSON endpoint (https://crt.sh/?q=<domain>&output=json) with a 30-second timeout and up to 3 retries per domain to ensure reliability against transient failures. For each input domain, it parses all returned certificate entries, extracts and normalizes unique domain names (including handling wildcard certificates and multi-value fields), and identifies newly discovered subdomains. It then sequentially tests network reachability via TCP connection attempts (3-second timeout) on ports 80 (HTTP), 443 (HTTPS), 22 (SSH), and 3389 (RDP), and, when web services are available, performs HTTP(S) requests to retrieve page titles for basic fingerprinting.
+Enumerates certificate-transparency and aggregated subdomain data from crt.sh and crt.name, then tests common TCP ports and performs basic HTTP(S) fingerprinting.
+
+```powershell
+cat t.csv
+Asset Name
+foo.com
+
+.\crt_enum.ps1 -CsvPath .\t.csv
+```
 
 ---
 ### `rmm_nrpt_block.ps1`
