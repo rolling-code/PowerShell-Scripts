@@ -15,7 +15,7 @@ PowerShell-Scripts/
 │   └── kickoff.ps1
 │   └── SetAdaptorMetricWired_Highest.ps1
 │   └── Check-ModularDS.ps1
-│   └── .ps1
+│   └── crt_enum.ps1
 │   └── rmm_nrpt_block.ps1
 
 ## ── 📂 ├── Azure Active Directory/
