@@ -17,6 +17,7 @@ PowerShell-Scripts/
 │   └── Check-ModularDS.ps1
 │   └── crt_enum.ps1
 │   └── rmm_nrpt_block.ps1
+│   └── WP-CVE-Validator-v1.8.ps1
 
 ## ── 📂 ├── Azure Active Directory/
 │   └── get_az_token.ps1
@@ -1015,4 +1016,13 @@ Populate table with your CVEs
 ```
 Run lookup.ps1
 
+### `WP-CVE-Validator-v1.8.ps1`
+WP-CVE-Validator is an evidence-first PowerShell utility for validating selected WordPress CVE indicators across a list of public websites.
+The tool separates observable behavior, version eligibility, denied or filtered requests, and inconclusive results. It does not treat a passive fingerprint or affected version as proof that a vulnerability is exploitable.
+
+```powershell
+.\WP-CVE-Validator.ps1 `
+    -DomainListPath .\wordpress-domains.txt `
+    -Enable60137DifferentialProbe
+```
 
