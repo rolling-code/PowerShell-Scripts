@@ -16,7 +16,7 @@ PowerShell-Scripts/
 │   └── SetAdaptorMetricWired_Highest.ps1
 │   └── Check-ModularDS.ps1
 │   └── crt_enum.ps1
-│   └── rmm_nrpt_block.ps1
+│   └── Sync-NrptDomainBlocklist.ps1
 │   └── WP-CVE-Validator-v2.0.8.ps1
 
 ## ── 📂 ├── Azure Active Directory/
@@ -976,24 +976,33 @@ foo.com
 ```
 
 ---
-### `rmm_nrpt_block.ps1`
+### `Sync-NrptDomainBlocklist.ps1`
+Sync-NrptDomainBlocklist.ps1 creates local Windows Name Resolution Policy Table (NRPT) sinkhole rules from two dynamically downloaded sources:
 
-Add local Windows NRPT-based RMM domain block script generated from the LOLRMM domain list (https://lolrmm.io/api/rmm_domains.csv).
-NRPTUsage: run PowerShell as Administrator, then execute 
+LOLRMM RMM domains: https://lolrmm.io/api/rmm_domains.csv
+Phishing.Database permanent domains: https://raw.githubusercontent.com/Phishing-Database/phishing/master/additions/permanent/domains.list
 
-`.\rmm_nrpt_block.ps1`
+Important considerations
+The LOLRMM feed contains legitimate dual-use remote-management services that may be approved in some environments.
+The Phishing.Database feed is community-maintained threat intelligence and may occasionally contain false positives.
 
-to create local RMMBlockTest NRPT rules.NRPT (Name Resolution Policy Table) lets Windows apply DNS resolution rules for domain namespaces/suffixes before normal DNS lookup, making it better suited than a hosts file for wildcard-style domains like *.teamviewer.com or *.anydesk.com.
-Removal: run 
+Before modifying NRPT, the script downloads both sources, normalizes supported DNS domains into NRPT namespace format, rejects unsupported entries such as IP addresses and regular-expression patterns, removes duplicates, and applies the user-editable $AllowedDomains allow-list.
 
-`.\rmm_nrpt_block.ps1 -Remove`
+The allow-list is defined near the beginning of the script:
+```powershell
+$AllowedDomains = @(
+    'github.com',
+    'githubusercontent.com'
+)
+```
 
-to delete only the NRPT rules created by this script.
-
-Chosen over hosts file because hosts only supports exact hostnames, while NRPT supports broader namespace/suffix blocking for local testing.
 To verify rule run:
 
 `Get-DnsClientNrptRule | Where-Object Comment -eq 'RMMBlockTest'`
+
+To remove all the rules created by the script:
+`.\Sync-NrptDomainBlocklist.ps1 -Remove`
+
 
 ---
 ### `lookup.ps1`
