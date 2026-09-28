@@ -1,83 +1,76 @@
+# PowerShell-Scripts
+A collection of PowerShell scripts, with some Python 🐍 utilities, for various administrative tasks, including Azure Active Directory and On-Prem Active Directory management.
 
-PowerShell-Scripts
+## Folder Structure
 
-A collection of PowerShell scripts (And some Python 🐍 as well) for various administrative tasks, including Azure Active Directory and On-Prem Active Directory management.
+Entries with documentation in this README jump to the corresponding section below. Entries without a dedicated description open the source file directly.
 
-Folder Structure:
+- **PowerShell-Scripts/**
+  - 📂 **[generic/](#section-generic-directory)**
+    - [Base64Tool.ps1](#base64toolps1)
+    - [Test-Feeds3.ps1](#test-feeds3ps1)
+    - [domains2ipsipv4Only.ps1](#domains2ipsipv4onlyps1)
+    - [DisableWindowsDefender.ps1](#disablewindowsdefenderps1)
+    - [kickoff.ps1](#kickoffps1)
+    - [SetAdaptorMetricWired_Highest.ps1](#setadaptormetricwired_highestps1)
+    - [Check-ModularDS.ps1](#check-modulardsps1)
+    - [crt_enum.ps1](#crt_enumps1)
+    - [Sync-NrptDomainBlocklist.ps1](#sync-nrptdomainblocklistps1)
+    - [WP-CVE-Validator-v2.0.8.ps1](#wp-cve-validator-v208ps1)
+  - 📂 **[Azure Active Directory/](#section-azure-active-directory)**
+    - [get_az_token.ps1](#get_az_tokenps1)
+    - [aadinternals_audit6.ps1](#aadinternals_audit6ps1)
+    - [get_policies.ps1](Azure%20Active%20Directory/get_policies.ps1)
+    - [grant_consent_MSGraph.ps1](Azure%20Active%20Directory/grant_consent_MSGraph.ps1)
+    - [sendmail.py](#sendmailpy)
+    - [Check-AllPowerfulAzurePerms3.ps1](#check-allpowerfulazureperms3ps1)
+    - [enum_entra_admins.ps1](Azure%20Active%20Directory/enum_entra_admins.ps1)
+    - [find_disabled_accounts.ps1](#find_disabled_accountsps1)
+    - [Watch-AzAutomationRunbookJob.ps1](#watch-azautomationrunbookjobps1)
+    - [Audit-AllUsersRolePerms.ps1](#audit-allusersrolepermsps1)
+    - [Get-DisabledUsersLicenses.ps1](#get-disableduserslicensesps1)
+    - [RemoveM365LicensesfromDisabledUsers.ps1](#removem365licensesfromdisabledusersps1)
+    - [Inspect-AzWebAppSecurity-Consolidated.ps1](#inspect-azwebappsecurity-consolidatedps1)
+    - [Audit-NeverSucceedingMailForwardingRules.ps1](#audit-neversucceedingmailforwardingrulesps1)
+    - [Review-TeamsLifecycleCleanupCandidates.ps1](#review-teamslifecyclecleanupcandidatesps1)
+    - [Report-InactiveGuestUsers-150Days.ps1](#report-inactiveguestusers-150daysps1)
+    - [Get-AzureStorageAnonymousAccess.ps1](#get-azurestorageanonymousaccessps1)
+    - [Test-AzureBlobAnonymousEndpoints.ps1](#test-azureblobanonymousendpointsps1)
+    - [Test-EntraTokenProtectionPolicies.ps1](#test-entratokenprotectionpoliciesps1)
+    - [list_all_applications.ps1](#list_all_applicationsps1)
+    - [BulkMultiPermExploitability.ps1](#bulkmultipermexploitabilityps1)
+    - [Profile-App.ps1](#profile-appps1)
+    - [Audit-AppDelegationRisks.ps1](#audit-appdelegationrisksps1)
+    - [New-MultiTenantOAuthConsentTrainingUrl.ps1](#new-multitenantoauthconsenttrainingurlps1)
+    - [New-OAuthRedirectMismatchTrainingUrl.ps1](#new-oauthredirectmismatchtrainingurlps1)
+    - [New-OrgOnlyOAuthConsentTrainingUrl.ps1](#new-orgonlyoauthconsenttrainingurlps1)
+  - 📂 **[On-Prem Active Directory/](#section-on-prem-active-directory)**
+    - [ad_object_permissions3.ps1](#get-adprincipalpermissionsps1)
+    - [delegated_rights.ps1](#delegated_rightsps1)
+    - [servers_get_smb.ps1](#servers_get_smbps1)
+    - [gpo_delegation_check2.ps1](#gpo_delegation_check2ps1)
+    - [whois_islocal_admin2.ps1](#whois_islocal_admin2ps1)
+    - [check_blank_password_users.ps1](#check_blank_password_usersps1)
+    - [check_PSSession_blank_passwords2.ps1](#check_pssession_blank_passwords2ps1)
+    - [check_smb_settings_all_domain_joined_pc_using_ps_remoting.ps1](#check_smb_settings_all_domain_joined_pc_using_ps_remotingps1)
+    - [check_smb_settings_all_domain_joined_pc_using_wmi_and_remote_registry.ps1](#check_smb_settings_all_domain_joined_pc_using_wmi_and_remote_registryps1)
+    - [inactive_users.ps1](#inactive_usersps1)
+    - [is_ldap_signing_enabled.ps1](On-Prem%20Active%20Directory/is_ldap_signing_enabled.ps1)
+    - [replicate_permissions.ps1](#replicate_permissionsps1)
+    - [replicated_rights2.ps1](#replicated_rights2ps1)
+    - [setNoPreauth.ps1](#setnopreauthps1)
+    - [AD_Audit_Script.ps1](On-Prem%20Active%20Directory/AD_Audit_Script.ps1)
+    - [GpoAclAudit.ps1](On-Prem%20Active%20Directory/GpoAclAudit.ps1)
+    - [GetUsersAndTheirManagedByMachines.ps1](#getusersandtheirmanagedbymachinesps1)
+    - [test_shares_read_write.ps1](#test_shares_read_writeps1)
+    - [analyze_gpo3.ps1](#analyze_gpo3ps1)
+    - [lan_audit_full2.ps1](#lan_audit_full2ps1)
+    - [CheckWritableAttributesADUsers.py](#checkwritableattributesaduserspyps1)
+    - [CheckWritableAttributesADUsers.ps1](#checkwritableattributesaduserspyps1)
+    - [Test-ADDnsLowPrivWrite.ps1](#test-addnslowprivwriteps1)
+  - [README.md](#powershell-scripts)
 
-```
-PowerShell-Scripts/
-## ── 📂 ├── generic/
-│   └── Base64Tool.ps1
-│   └── Test-Feeds3.ps1
-│   └── domains2ipsipv4Only.ps1
-│   └── DisableWindowsDefender.ps1
-│   └── kickoff.ps1
-│   └── SetAdaptorMetricWired_Highest.ps1
-│   └── Check-ModularDS.ps1
-│   └── crt_enum.ps1
-│   └── Sync-NrptDomainBlocklist.ps1
-│   └── WP-CVE-Validator-v2.0.8.ps1
-
-## ── 📂 ├── Azure Active Directory/
-│   └── get_az_token.ps1
-│   └── aadinternals_audit6.ps1 (Uses AADInternals)
-│   └── get_policies.ps1
-│   └── grant_consent_MSGraph.ps1
-│   └── sendmail.py
-│   └── Check-AllPowerfulAzurePerms3.ps1
-│   └── enum_entra_admins.ps1
-│   └── find_disabled_accounts.ps1
-│   └── Watch-AzAutomationRunbookJob.ps1
-│   └── Audit-AllUsersRolePerms.ps1
-│   └── Get-DisabledUsersLicenses.ps1
-│   └── RemoveM365LicensesfromDisabledUsers.ps1
-│   └── Inspect-AzWebAppSecurity-Consolidated.ps1
-│   └── Audit-NeverSucceedingMailForwardingRules.ps1
-│   └── Review-TeamsLifecycleCleanupCandidates.ps1
-│   └── Report-InactiveGuestUsers-150Days.ps1
-│   └── Get-AzureStorageAnonymousAccess.ps1
-│   └── Test-AzureBlobAnonymousEndpoints.ps1
-│   └── Test-EntraTokenProtectionPolicies.ps1
-│   └── 👉** Azure AD application auditing tools **
-        list_all_applications.ps1
-        BulkMultiPermExploitability.ps1
-        Profile-App.ps1
-        Audit-AppDelegationRisks.ps1
-│   └── 👉** automate creation of malicious-looking OAuth authorization flows (device‑code and consent URLs) used in consent‑phishing simulations **
-│       New-MultiTenantOAuthConsentTrainingUrl.ps1
-│       New-OAuthRedirectMismatchTrainingUrl.ps1
-│       New-OrgOnlyOAuthConsentTrainingUrl.ps1
-
-## ── 📂 ├── On-Prem Active Directory/
-│   └── ad_object_permissions3.ps1 (uses ActiveDirectory module (ADWS))
-│   └── delegated_rights.ps1 (uses ActiveDirectory module (ADWS))
-│   └── servers_get_smb.ps1 (uses ActiveDirectory module (ADWS))
-│   └── gpo_delegation_check2.ps1 (imports modules: GroupPolicy)
-│   └── whois_islocal_admin2.ps1
-│   └── check_blank_password_users.ps1 (uses ActiveDirectory module (ADWS))
-│   └── check_PSSession_blank_passwords2.ps1 (uses ActiveDirectory module (ADWS))
-│   └── check_smb_settings_all_domain_joined_pc_using_ps_remoting.ps1 (uses ActiveDirectory module (ADWS))
-│   └── check_smb_settings_all_domain_joined_pc_using_wmi_and_remote_registry.ps1 (uses ActiveDirectory module (ADWS) and WMI)
-│   └── inactive_users.ps1 (uses ActiveDirectory module (ADWS))
-│   └── is_ldap_signing_enabled.ps1 (relies on raw LDAP/ADSI)
-│   └── replicate_permissions.ps1 (uses ActiveDirectory module (ADWS))
-│   └── replicated_rights2.ps1 (uses ActiveDirectory module (ADWS))
-│   └── setNoPreauth.ps1
-│   └── AD_Audit_Script.ps1 (uses PowerSploit and ActiveDirectory module (ADWS))
-│   └── GpoAclAudit.ps1 (uses PowerSploit)
-│   └── GetUsersAndTheirManagedByMachines.ps1 (uses ActiveDirectory module (ADWS))
-│   └── test_shares_read_write.ps1
-│   └── analyze_gpo3.ps1 (imports modules: GroupPolicy)
-│   └── lan_audit_full2.ps1
-│   └── CheckWritableAttributesADUsers.py (Python, PowerShell version is below)
-│   └── CheckWritableAttributesADUsers.ps1 (is the PowerShell equivalent of Python file above)
-│   └── Test-ADDnsLowPrivWrite.ps1
-
-└── README.md
-```
-
-Usage:
+## Usage
 
 1. Clone the repository:
    git clone https://github.com/rolling-code/PowerShell-Scripts.git
@@ -97,7 +90,7 @@ Usage:
 You may need modules to be loaded for some scripts to run properly. No worries I got you.
 Run the script kickoff.ps1 to configure your powershell with all the necessary prerequisites.
 
-Notes:
+## Notes
 
 - Scripts are organized by domain (e.g., Azure AD, On-Prem AD).
 - Contributions and suggestions are welcome!
@@ -878,6 +871,17 @@ whenChanged       : 1/19/2026 12:56:35 PM
 `
 
 ## ── 📂 Section: Generic Directory ──
+---
+### `kickoff.ps1`
+
+Configures common PowerShell prerequisites used by scripts in this repository. The script can install or update required modules and can set up PowerSploit when run from Windows PowerShell 5.1 after the PowerSploit repository has been cloned locally.
+
+Run from the repository root:
+
+```powershell
+.\kickoff.ps1
+```
+
 ---
 ### `Test-Feeds3.ps1`
 
