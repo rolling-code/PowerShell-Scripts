@@ -1,5 +1,5 @@
 # PowerShell-Scripts
-A collection of PowerShell scripts, with some Python 🐍 utilities, for various administrative tasks, including Azure Active Directory and On-Prem Active Directory management.
+A collection of PowerShell scripts and Python 🐍 utilities for security validation, administration, reporting, Microsoft Entra ID, Azure, Microsoft 365, and on-premises Active Directory.
 
 ## Folder Structure
 
@@ -15,7 +15,7 @@ Entries with documentation in this README jump to the corresponding section belo
     - [SetAdaptorMetricWired_Highest.ps1](#setadaptormetricwired_highestps1)
     - [Check-ModularDS.ps1](#check-modulardsps1)
     - [crt_enum.ps1](#crt_enumps1)
-    - [Sync-NrptDomainBlocklist.ps1](#sync-nrptdomainblocklistps1)
+    - [generic/Set-DynamicNrptDomainBlock.ps1](#set-dynamicnrptdomainblockps1)
     - [WP-CVE-Validator-v2.0.8.ps1](#wp-cve-validator-v208ps1)
   - 📂 **[Azure Active Directory/](#section-azure-active-directory)**
     - [get_az_token.ps1](#get_az_tokenps1)
@@ -68,27 +68,36 @@ Entries with documentation in this README jump to the corresponding section belo
     - [CheckWritableAttributesADUsers.py](#checkwritableattributesaduserspyps1)
     - [CheckWritableAttributesADUsers.ps1](#checkwritableattributesaduserspyps1)
     - [Test-ADDnsLowPrivWrite.ps1](#test-addnslowprivwriteps1)
-  - [README.md](#powershell-scripts)
 
 ## Usage
 
-1. Clone the repository:
-   git clone https://github.com/rolling-code/PowerShell-Scripts.git
-   I recommend professional pen testers also:
-   git clone https://github.com/PowerShellMafia/PowerSploit.git
-   and run ./kickoff.ps1
-   - This script will setup many necessary modules.
-   - This script will update these modules if you choose to do so.
-   - This script will setup PowerSploit for you if run under PowerShell 5.1 (git clone that repo as shown above) 
+Clone the repository:
 
-3. Navigate to the desired folder, eg:
-   cd "PowerShell-Scripts/Azure Active Directory"
+```powershell
+git clone https://github.com/rolling-code/PowerShell-Scripts.git
+Set-Location .\PowerShell-Scripts
+```
 
-4. Run the script using PowerShell, or Python eg:
-   .\get_az_token.ps1
+Some legacy scripts use PowerSploit. If a specific script requires it, clone PowerSploit separately:
 
-You may need modules to be loaded for some scripts to run properly. No worries I got you.
-Run the script kickoff.ps1 to configure your powershell with all the necessary prerequisites.
+```powershell
+git clone https://github.com/PowerShellMafia/PowerSploit.git
+```
+
+Run `kickoff.ps1` from the repository root to install or update common prerequisites. PowerSploit setup requires Windows PowerShell 5.1 and a local PowerSploit clone.
+
+```powershell
+.\kickoff.ps1
+```
+
+Navigate to the relevant directory and run the desired script. For example:
+
+```powershell
+Set-Location '.\Azure Active Directory'
+.\get_az_token.ps1
+```
+
+Review each script's comment-based help, parameters, prerequisites, and safety notes before execution. Use authorized test accounts and environments where a script performs active validation or makes changes.
 
 ## Notes
 
@@ -180,7 +189,7 @@ $env:ENTRA_CLIENT_SECRET = [System.Net.NetworkCredential]::new(
     $secureSecret
 ).Password
 
-python .\send_graph_mail.py 
+python .\sendmail.py 
     --tenant-id "00000000-0000-0000-0000-000000000000" 
     --client-id "11111111-1111-1111-1111-111111111111" 
     --sender "notifications@contoso.com" 
@@ -768,14 +777,14 @@ Given the output from the PowerSploit:
 
 This script will read the file "shared_folders.csv" and generate "ShareSecurityReport.csv".
 
-Good targets to examine further on your AD are those shares shown as "DISK" and Readble is "TRUE"
+Good targets to examine further on your AD are those shares shown as "DISK" and Readable is "TRUE"
 
 ---
 ### `analyze_gpo3.ps1`
 
 Gathers info on the GPO's pushed to your machine.
 Loads the GPResult XML from disk
-Gets GUIDS
+Gets GUIDs
 For each extracted GUID, Builds the folder name, if found, scans subfolders for
  - registry.pol (machine)
  - Software installation XMLs 
@@ -792,7 +801,7 @@ You will see good output. You can get additional details by running:
 
 `Get-GPOReport -Id XXX -ReportType XML`
 
-with the GUIDS produced at step 2.
+with the GUIDs produced at step 2.
 
 ---
 ### `lan_audit_full2.ps1`
@@ -813,9 +822,9 @@ This is a great tool to uncover secrets on a LAN. Corporations unknowingly share
 ---
 ### `CheckWritableAttributesADUsers.py|.ps1`
 
-The Python svcript uses strictly LDAP3 to enumerate the AD users (use the -dc-ip parameter to specify your Domain Controller IP).
+The Python script uses strictly LDAP3 to enumerate the AD users (use the -dc-ip parameter to specify your Domain Controller IP).
 Then it will attempt to write "temp" to attributes to determine if any is writeable.
-Although not the most elegent solution - it works! It will write a users.cvs file, which should only contain your own AD account-any others are worhty of ivestigation!
+Although not the most elegent solution - it works! It will write a users.csv file, which should only contain your own AD account-any others are worthy of investigation!
 ```powershell
 python3 CheckWritableAttributesADUsers.py DOMAIN/analyst:'XXX' -dc-ip 1.2.3.4
 ```
@@ -920,7 +929,7 @@ Equivalent to
 ---
 ### `domains2ipsipv4Only.ps1`
 
-Given a list of domain will provide DNS info. I use it in combination with the domains in a tenant to get info on them (is it on wix, aws, etc..)
+Given a list of domains, provides DNS info. I use it in combination with the domains in a tenant to get info on them (is it on wix, aws, etc..)
 
 First get domains from tenant:
 ```powershell
@@ -936,7 +945,7 @@ Results piped to all_domains.txt which we will feed into the script like so:
 
 Disables Windows Defender Services. Need to run as admin.
 
-If you want to automatically do so after every reboot & login event, run this PowerSHell to create a Scheduled Task which will run that .ps1 for you under SYSTEM.
+If you want to automatically do so after every reboot & login event, run this PowerShell to create a Scheduled Task which will run that .ps1 for you under SYSTEM.
 ```powershell
 $Action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\Users\analyst\DisableWindowsDefender.ps1"'
 $Triggers = @(
@@ -980,32 +989,114 @@ foo.com
 ```
 
 ---
-### `Sync-NrptDomainBlocklist.ps1`
-Sync-NrptDomainBlocklist.ps1 creates local Windows Name Resolution Policy Table (NRPT) sinkhole rules from two dynamically downloaded sources:
+### `Set-DynamicNrptDomainBlock.ps1`
 
-LOLRMM RMM domains: https://lolrmm.io/api/rmm_domains.csv
-Phishing.Database permanent domains: https://raw.githubusercontent.com/Phishing-Database/phishing/master/additions/permanent/domains.list
+**Repository path:** `generic/Set-DynamicNrptDomainBlock.ps1`
 
-Important considerations
-The LOLRMM feed contains legitimate dual-use remote-management services that may be approved in some environments.
-The Phishing.Database feed is community-maintained threat intelligence and may occasionally contain false positives.
+Creates and maintains local Windows Name Resolution Policy Table (NRPT) sinkhole rules for validated malicious or high-risk DNS namespaces. The script combines complementary intelligence sources, normalizes them into NRPT-compatible domain rules, applies safety exclusions, and tags every managed rule with `RMMBlockTest` for review and controlled removal.
 
-Before modifying NRPT, the script downloads both sources, normalizes supported DNS domains into NRPT namespace format, rejects unsupported entries such as IP addresses and regular-expression patterns, removes duplicates, and applies the user-editable $AllowedDomains allow-list.
+#### Intelligence sources
 
-The allow-list is defined near the beginning of the script:
+1. **LOLRMM RMM domains**  
+   `https://lolrmm.io/api/rmm_domains.csv`
+
+   Provides domains associated with remote monitoring and management products. These products are dual-use and may be legitimate in approved environments, so required services should be placed in the local allow-list.
+
+2. **Phishing.Database permanent domains**  
+   `https://raw.githubusercontent.com/Phishing-Database/phishing/master/additions/permanent/domains.list`
+
+   Provides community-maintained phishing-domain intelligence. As with any community feed, entries may change or occasionally require local review.
+
+3. **URLhaus malware URLs**  
+   `https://urlhaus.abuse.ch/downloads/csv/`
+
+   Downloads the URLhaus ZIP archive, validates and extracts the included data file, keeps records marked `online`, extracts DNS hostnames, removes duplicates, rejects literal IP addresses, and excludes shared hosting platforms that would be unsafe to block as complete DNS namespaces.
+
+4. **Local operator-maintained known-bad list**
+
+   Accepts plain DNS domains or complete URLs. URLs are reduced to their DNS hostname before validation. The initial local entries are:
+
 ```powershell
-$AllowedDomains = @(
-    'github.com',
-    'githubusercontent.com'
+$KnownBadEntries = @(
+    'https://cladesktop-apps.com/',
+    'https://teams-cloud.live/'
 )
 ```
 
-To verify rule run:
+#### Safety and precision controls
 
-`Get-DnsClientNrptRule | Where-Object Comment -eq 'RMMBlockTest'`
+Before modifying NRPT, the script:
 
-To remove all the rules created by the script:
-`.\Sync-NrptDomainBlocklist.ps1 -Remove`
+- Downloads each remote source with retries and validates that content was received.
+- Downloads URLhaus as a binary ZIP archive, verifies the ZIP signature, extracts the archive, and validates the expected CSV schema.
+- Keeps only URLhaus records currently marked `online`.
+- Rejects literal IP addresses because NRPT controls DNS resolution and cannot block direct-IP connections.
+- Rejects unsupported embedded wildcard, regular-expression, path, CIDR, port-qualified, and malformed DNS entries.
+- Deduplicates domains while preserving source attribution.
+- Excludes multi-tenant shared hosting platforms from URLhaus-derived whole-domain blocking.
+- Applies the local allow-list as the final override.
+- Reads existing Windows NRPT rules and skips namespaces that are already present.
+- Removes rules created by this script if a namespace later becomes allow-listed.
+- Creates rules using the sinkhole DNS server `127.0.0.1` and the comment tag `RMMBlockTest`.
+
+The local allow-list permits each listed domain and all of its subdomains. Add approved business services here before running the script:
+
+```powershell
+$AllowedDomains = @(
+    'github.com',
+    'raw.githubusercontent.com'
+)
+```
+
+Shared hosting exclusions are maintained separately from the allow-list. This distinction means that a platform can be excluded from broad URLhaus-derived DNS blocking without being described as universally trusted.
+
+#### Run the script
+
+Run from an elevated PowerShell session:
+
+```powershell
+Set-Location '.\generic'
+.\Set-DynamicNrptDomainBlock.ps1
+```
+
+Suppress per-domain add and skip messages while retaining stage and summary output:
+
+```powershell
+.\Set-DynamicNrptDomainBlock.ps1 -NoProgress
+```
+
+Review rules created by the script:
+
+```powershell
+Get-DnsClientNrptRule |
+    Where-Object Comment -eq 'RMMBlockTest' |
+    Select-Object DisplayName, Namespace, NameServers, Comment
+```
+
+Verify the two initial local known-bad entries:
+
+```powershell
+Get-DnsClientNrptRule |
+    Where-Object {
+        $_.Comment -eq 'RMMBlockTest' -and
+        $_.Namespace -match 'cladesktop-apps|teams-cloud'
+    } |
+    Format-List DisplayName, Namespace, NameServers, Comment
+```
+
+Remove all NRPT rules created by the script:
+
+```powershell
+.\Set-DynamicNrptDomainBlock.ps1 -Remove
+```
+
+#### Limitations
+
+- NRPT blocks DNS namespaces, not complete URLs or individual URL paths.
+- NRPT does not block direct connections to literal IP addresses.
+- Applications that bypass the Windows DNS client or use independent encrypted DNS may not honor these rules.
+- Feed inclusion is threat intelligence, not permanent proof that every listed domain remains malicious.
+- This control complements, but does not replace, SmartScreen, EDR, secure web gateways, DNS filtering, firewall controls, email security, patching, or user awareness.
 
 
 ---
