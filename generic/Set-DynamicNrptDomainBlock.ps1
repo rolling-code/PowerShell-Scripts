@@ -2,11 +2,10 @@
 #requires -RunAsAdministrator
 <#
 .SYNOPSIS
-    Creates or removes local Windows NRPT block rules from live RMM and phishing-domain sources.
+    Creates or removes local Windows NRPT block rules from live RMM, phishing-domain, and malware-host sources.
 
 .DESCRIPTION
-    Downloads and normalizes domains from LOLRMM and Phishing.Database at runtime, then merges a local
-    operator-maintained known-bad list. The complete
+    Downloads and normalizes domains from LOLRMM and Phishing.Database at runtime. The complete
     namespace catalog is built, validated, deduplicated, and filtered through a local allow-list
     before Windows NRPT is modified.
 
@@ -23,13 +22,13 @@
     Suppresses per-domain Added and Skipping messages while retaining stage and summary output.
 
 .EXAMPLE
-    .\Set-DynamicNrptDomainBlock-v2.2.ps1
+    .\Set-DynamicNrptDomainBlock.ps1
 
 .EXAMPLE
-    .\Set-DynamicNrptDomainBlock-v2.2.ps1 -Remove
+    .\Set-DynamicNrptDomainBlock.ps1 -Remove
 
 .NOTES
-    Tool version: 2.2
+    Tool version: 2.3.2
 #>
 [CmdletBinding()]
 param(
@@ -41,8 +40,8 @@ Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-$ToolName = 'Set-DynamicNrptDomainBlock-v2.2.ps1'
-$ToolVersion = '2.2'
+$ToolName = 'Set-DynamicNrptDomainBlock.ps1'
+$ToolVersion = '2.3.2'
 $Tag = 'RMMBlockTest'
 $SinkholeNameServer = '127.0.0.1'
 
@@ -53,26 +52,48 @@ $AllowedDomains = @(
     'raw.githubusercontent.com'
 )
 
-# Local operator-maintained known-bad list.
-# Add one DNS domain or absolute URL per line. URLs are reduced to their DNS host.
-# Each accepted entry blocks the domain and all of its subdomains.
+# Local operator-maintained known-bad list. URLs are reduced to DNS hosts.
 $KnownBadEntries = @(
     'https://cladesktop-apps.com/',
     'https://teams-cloud.live/'
 )
 
+# Shared platforms are excluded only from URLhaus-derived blocking because
+# a URL-level IOC must not cause an entire multi-tenant platform to be blocked.
+$SharedInfrastructureExclusions = @(
+    'github.com','raw.githubusercontent.com','gitlab.com','drive.google.com',
+    'dropbox.com','vercel.app','pages.dev','workers.dev','netlify.app',
+    'amazonaws.com','cloudfront.net','r2.dev'
+)
+
+# Remote sources remain explicit and easy to review.
 $Sources = @(
     [pscustomobject]@{
         Name = 'LOLRMM RMM domains'
-        Type = 'Csv'
+        Type = 'LolrmmCsv'
         Uri  = 'https://lolrmm.io/api/rmm_domains.csv'
     },
     [pscustomobject]@{
         Name = 'Phishing.Database permanent domains'
         Type = 'DomainList'
         Uri  = 'https://raw.githubusercontent.com/Phishing-Database/phishing/master/additions/permanent/domains.list'
+    },
+    [pscustomobject]@{
+        Name = 'URLhaus online malware hosts'
+        Type = 'UrlhausZip'
+        Uri  = 'https://urlhaus.abuse.ch/downloads/csv/'
     }
 )
+
+function Show-ProtectionBanner {
+    $banner = @'
++--------------------------------------------------------------------------+
+|  Combining LOLRMM + Phishing.Database + URLhaus                         |
+|  to provide best-of-breed DNS protection!                               |
++--------------------------------------------------------------------------+
+'@
+    Write-Host $banner -ForegroundColor Magenta
+}
 
 function Write-Status {
     param(
@@ -169,38 +190,17 @@ function ConvertTo-NrptNamespace {
 
 function ConvertTo-KnownBadDomain {
     param([Parameter(Mandatory = $true)][string]$InputValue)
-
-    $original = $InputValue
-    $value = $InputValue.Trim().Trim('"').Trim("'")
-    if ([string]::IsNullOrWhiteSpace($value)) {
-        return [pscustomobject]@{ IsValid = $false; Domain = $null; Reason = 'Empty entry'; Original = $original }
-    }
-    if ($value.StartsWith('#') -or $value.StartsWith(';')) {
-        return [pscustomobject]@{ IsValid = $false; Domain = $null; Reason = 'Comment entry'; Original = $original }
-    }
-
-    $candidate = $value
+    $candidate = $InputValue.Trim().Trim('"').Trim("'")
     if ($candidate -match '^[a-z][a-z0-9+.-]*://') {
-        $parsedUri = $null
-        if (-not [System.Uri]::TryCreate($candidate, [System.UriKind]::Absolute, [ref]$parsedUri)) {
-            return [pscustomobject]@{ IsValid = $false; Domain = $null; Reason = 'URL could not be parsed'; Original = $original }
+        $uri = $null
+        if (-not [System.Uri]::TryCreate($candidate,[System.UriKind]::Absolute,[ref]$uri) -or [string]::IsNullOrWhiteSpace($uri.DnsSafeHost)) {
+            return [pscustomobject]@{IsValid=$false;Domain=$null;Reason='URL could not be parsed';Original=$InputValue}
         }
-        if ([string]::IsNullOrWhiteSpace($parsedUri.DnsSafeHost)) {
-            return [pscustomobject]@{ IsValid = $false; Domain = $null; Reason = 'URL does not contain a DNS host'; Original = $original }
-        }
-        $candidate = $parsedUri.DnsSafeHost
+        $candidate = $uri.DnsSafeHost
     }
-
-    $normalized = ConvertTo-NrptNamespace -InputValue $candidate
-    if (-not $normalized.IsValid) {
-        return [pscustomobject]@{ IsValid = $false; Domain = $null; Reason = $normalized.Reason; Original = $original }
-    }
-    return [pscustomobject]@{
-        IsValid = $true
-        Domain = $normalized.Namespace.TrimStart('.')
-        Reason = $null
-        Original = $original
-    }
+    $result = ConvertTo-NrptNamespace -InputValue $candidate
+    if (-not $result.IsValid) { return [pscustomobject]@{IsValid=$false;Domain=$null;Reason=$result.Reason;Original=$InputValue} }
+    return [pscustomobject]@{IsValid=$true;Domain=$result.Namespace.TrimStart('.');Reason=$null;Original=$InputValue}
 }
 
 function Get-LocalKnownBadEntries {
@@ -209,13 +209,8 @@ function Get-LocalKnownBadEntries {
     $domains = New-Object 'System.Collections.Generic.List[string]'
     foreach ($entry in $Entries) {
         $result = ConvertTo-KnownBadDomain -InputValue $entry
-        if (-not $result.IsValid) {
-            throw "Invalid local known-bad entry '$entry': $($result.Reason). No NRPT rules were changed."
-        }
-        if (-not $domains.Contains($result.Domain)) {
-            $domains.Add($result.Domain) | Out-Null
-            Write-Status "Known-bad domain normalized: $($result.Domain)" 'Success'
-        }
+        if (-not $result.IsValid) { throw "Invalid local known-bad entry '$entry': $($result.Reason). No NRPT rules were changed." }
+        if (-not $domains.Contains($result.Domain)) { $domains.Add($result.Domain)|Out-Null; Write-Status "Known-bad domain normalized: $($result.Domain)" 'Success' }
     }
     return $domains.ToArray()
 }
@@ -301,6 +296,78 @@ function Get-DomainListEntries {
     return $entries
 }
 
+function Get-UrlhausEntriesFromZip {
+    param(
+        [Parameter(Mandatory = $true)][string]$SourceName,
+        [Parameter(Mandatory = $true)][string]$Uri,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][string[]]$ExcludedDomainList
+    )
+
+    $workRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("NrptUrlhaus-{0}" -f [guid]::NewGuid().ToString('N'))
+    $zipPath = Join-Path $workRoot 'URLhaus.zip'
+    $extractPath = Join-Path $workRoot 'Extracted'
+    New-Item -ItemType Directory -Path $extractPath -Force | Out-Null
+
+    try {
+        Write-Status "Downloading source: $SourceName" 'Stage'
+        Write-Status "Source URL: $Uri" 'Info'
+        $downloaded = $false
+        for ($attempt=1; $attempt -le 3; $attempt++) {
+            try {
+                Write-Status "Binary download attempt $attempt of 3..." 'Info'
+                Invoke-WebRequest -Uri $Uri -Method Get -UseBasicParsing -TimeoutSec 120 -Headers @{'User-Agent'="$ToolName/$ToolVersion"} -OutFile $zipPath -ErrorAction Stop
+                if (-not (Test-Path -LiteralPath $zipPath) -or (Get-Item -LiteralPath $zipPath).Length -lt 4) { throw 'The downloaded archive is empty or missing.' }
+                $signature = [System.IO.File]::ReadAllBytes($zipPath)[0..3]
+                if ($signature[0] -ne 0x50 -or $signature[1] -ne 0x4B) { throw 'The URLhaus response is not a ZIP archive (PK signature missing).' }
+                $downloaded=$true
+                Write-Status "Binary download complete: $((Get-Item -LiteralPath $zipPath).Length) bytes." 'Success'
+                break
+            } catch {
+                Write-Status "Binary download attempt $attempt failed: $($_.Exception.Message)" 'Warning'
+                if ($attempt -lt 3) { Start-Sleep -Seconds (2*$attempt) }
+            }
+        }
+        if (-not $downloaded) { throw "Unable to download required source '$SourceName' after 3 attempts: $Uri" }
+
+        Write-Status 'Expanding the URLhaus ZIP archive...' 'Stage'
+        Expand-Archive -LiteralPath $zipPath -DestinationPath $extractPath -Force
+        $dataFile = Get-ChildItem -LiteralPath $extractPath -File -Recurse | Where-Object { $_.Extension -in '.txt','.csv' } | Select-Object -First 1
+        if ($null -eq $dataFile) { throw 'The URLhaus ZIP archive contained no .txt or .csv data file.' }
+        Write-Status "URLhaus data file: $($dataFile.Name)" 'Success'
+
+        $lines = @(Get-Content -LiteralPath $dataFile.FullName | Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and -not $_.StartsWith('#') })
+        if ($lines.Count -eq 0) { throw 'URLhaus data file contained no data rows.' }
+        $header=@('id','dateadded','url','url_status','last_online','threat','tags','urlhaus_link','reporter')
+        $rows=@($lines | ConvertFrom-Csv -Header $header)
+        if ($rows.Count -eq 0) { throw 'URLhaus data contained no parseable records.' }
+
+        $firstStatus=[string]($rows[0].url_status);$firstUrl=[string]($rows[0].url)
+        if ([string]::IsNullOrWhiteSpace($firstStatus) -or [string]::IsNullOrWhiteSpace($firstUrl)) { throw 'URLhaus schema validation failed after extraction.' }
+        Write-Status "URLhaus schema confirmed after ZIP extraction: first status='$firstStatus'." 'Success'
+
+        $domains=New-Object 'System.Collections.Generic.List[string]'
+        $online=0;$offline=0;$ips=0;$shared=0;$invalid=0;$duplicates=0
+        foreach($row in $rows) {
+            if ([string]($row.url_status) -ne 'online') {$offline++;continue}
+            $online++
+            $parsedUri=$null
+            if (-not [System.Uri]::TryCreate([string]($row.url),[System.UriKind]::Absolute,[ref]$parsedUri)) {$invalid++;continue}
+            $hostName=$parsedUri.DnsSafeHost.Trim().TrimEnd('.').ToLowerInvariant()
+            if ([string]::IsNullOrWhiteSpace($hostName)) {$invalid++;continue}
+            if (Test-IsIpAddress -Value $hostName) {$ips++;continue}
+            if (Test-IsAllowedNamespace -Namespace $hostName -AllowedDomainList $ExcludedDomainList) {$shared++;continue}
+            if ($domains.Contains($hostName)) {$duplicates++;continue}
+            $domains.Add($hostName)|Out-Null
+        }
+        if ($domains.Count -eq 0) { throw "URLhaus produced no usable online DNS hosts. rows=$($rows.Count); online=$online; offline=$offline; IPs=$ips; shared=$shared; invalid=$invalid." }
+        Write-Status "URLhaus rows=$($rows.Count); online=$online; offline=$offline; DNS hosts=$($domains.Count); literal IPs skipped=$ips; shared skipped=$shared; invalid=$invalid; duplicates=$duplicates." 'Success'
+        return $domains.ToArray()
+    }
+    finally {
+        if (Test-Path -LiteralPath $workRoot) { Remove-Item -LiteralPath $workRoot -Recurse -Force -ErrorAction SilentlyContinue }
+    }
+}
+
 function Add-SourceEntriesToCatalog {
     param(
         [Parameter(Mandatory = $true)][AllowEmptyCollection()][hashtable]$Catalog,
@@ -348,12 +415,14 @@ function Add-SourceEntriesToCatalog {
 }
 
 Write-Host ''
+Show-ProtectionBanner
 Write-Status "$ToolName v$ToolVersion" 'Info'
 Write-Status "NRPT rule tag: $Tag" 'Info'
 Write-Status "Sinkhole DNS server: $SinkholeNameServer" 'Info'
-Write-Status 'Downloaded sources are merged with a local operator-maintained known-bad list; the allow-list takes final precedence.' 'Info'
+Write-Status 'LOLRMM, Phishing.Database, and URLhaus are downloaded live and merged with the local known-bad list.' 'Info'
 Write-Status "Local allow-list entries: $($AllowedDomains.Count)" 'Info'
 Write-Status "Local known-bad entries: $($KnownBadEntries.Count)" 'Info'
+Write-Status "Shared infrastructure exclusions: $($SharedInfrastructureExclusions.Count)" 'Info'
 foreach ($allowedDomain in $AllowedDomains) {
     Write-Status "Allow-listed domain and subdomains: $allowedDomain" 'Success'
 }
@@ -402,24 +471,31 @@ foreach ($allowedDomain in $AllowedDomains) {
 }
 Write-Status "Validated allow-list entries: $($normalizedAllowedDomains.Count)." 'Success'
 
+Write-Status 'Validating shared infrastructure exclusions...' 'Stage'
+$normalizedSharedInfrastructure=New-Object 'System.Collections.Generic.List[string]'
+foreach($excludedDomain in $SharedInfrastructureExclusions) {
+    $r=ConvertTo-NrptNamespace -InputValue ([string]$excludedDomain)
+    if(-not $r.IsValid){throw "Invalid shared infrastructure exclusion '$excludedDomain': $($r.Reason)."}
+    $v=$r.Namespace.TrimStart('.').ToLowerInvariant()
+    if(-not $normalizedSharedInfrastructure.Contains($v)){$normalizedSharedInfrastructure.Add($v)|Out-Null}
+}
+Write-Status "Validated shared infrastructure exclusions: $($normalizedSharedInfrastructure.Count)." 'Success'
+
 $catalog = @{}
 $rejectedEntries = New-Object 'System.Collections.Generic.List[object]'
-
-# Merge local known-bad domains into the same validated catalog as remote sources.
-$normalizedKnownBadDomains = @(Get-LocalKnownBadEntries -Entries $KnownBadEntries)
-Add-SourceEntriesToCatalog -Catalog $catalog -Rejected $rejectedEntries -SourceName 'Local known-bad domains' -Entries $normalizedKnownBadDomains
+$localEntries=@(Get-LocalKnownBadEntries -Entries $KnownBadEntries)
+Add-SourceEntriesToCatalog -Catalog $catalog -Rejected $rejectedEntries -SourceName 'Local known-bad domains' -Entries $localEntries
 
 foreach ($source in $Sources) {
     Write-Host ''
-    $content = Invoke-TextDownload -SourceName $source.Name -Uri $source.Uri
-    if ($source.Type -eq 'Csv') {
-        $entries = @(Get-LolrmmEntries -Content $content)
-    }
-    elseif ($source.Type -eq 'DomainList') {
-        $entries = @(Get-DomainListEntries -Content $content)
+    if ($source.Type -eq 'UrlhausZip') {
+        $entries=@(Get-UrlhausEntriesFromZip -SourceName $source.Name -Uri $source.Uri -ExcludedDomainList $normalizedSharedInfrastructure.ToArray())
     }
     else {
-        throw "Unsupported source type: $($source.Type)"
+        $content=Invoke-TextDownload -SourceName $source.Name -Uri $source.Uri
+        if ($source.Type -eq 'LolrmmCsv') {$entries=@(Get-LolrmmEntries -Content $content)}
+        elseif ($source.Type -eq 'DomainList') {$entries=@(Get-DomainListEntries -Content $content)}
+        else {throw "Unsupported source type: $($source.Type)"}
     }
     Add-SourceEntriesToCatalog -Catalog $catalog -Rejected $rejectedEntries -SourceName $source.Name -Entries $entries
 }
@@ -554,7 +630,7 @@ Write-Status "Excluded by local allow-list: $($allowListedCatalogKeys.Count)" 'S
 Write-Status "Previously blocked allow-listed rules removed: $allowListedRulesRemoved" 'Success'
 Write-Host ''
 Write-Status "Review rules with: Get-DnsClientNrptRule | Where-Object Comment -eq '$Tag'" 'Info'
-Write-Status "Remove rules with: .\Set-DynamicNrptDomainBlock-v2.2.ps1 -Remove" 'Info'
+Write-Status "Remove rules with: .\Set-DynamicNrptDomainBlock.ps1 -Remove" 'Info'
 Write-Status "Test GitHub with: Resolve-DnsName 'github.com'" 'Info'
 
 if ($failedCount -gt 0 -or $allowListedRuleRemovalFailures -gt 0) { exit 1 }
