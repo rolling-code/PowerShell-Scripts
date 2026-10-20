@@ -5,7 +5,8 @@
     Creates or removes local Windows NRPT block rules from live RMM and phishing-domain sources.
 
 .DESCRIPTION
-    Downloads and normalizes domains from LOLRMM and Phishing.Database at runtime. The complete
+    Downloads and normalizes domains from LOLRMM and Phishing.Database at runtime, then merges a local
+    operator-maintained known-bad list. The complete
     namespace catalog is built, validated, deduplicated, and filtered through a local allow-list
     before Windows NRPT is modified.
 
@@ -22,13 +23,13 @@
     Suppresses per-domain Added and Skipping messages while retaining stage and summary output.
 
 .EXAMPLE
-    .\rmm_nrpt_block.ps1
+    .\Set-DynamicNrptDomainBlock-v2.2.ps1
 
 .EXAMPLE
-    .\rmm_nrpt_block.ps1 -Remove
+    .\Set-DynamicNrptDomainBlock-v2.2.ps1 -Remove
 
 .NOTES
-    Tool version: 2.1
+    Tool version: 2.2
 #>
 [CmdletBinding()]
 param(
@@ -40,8 +41,8 @@ Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-$ToolName = 'rmm_nrpt_block.ps1'
-$ToolVersion = '2.1'
+$ToolName = 'Set-DynamicNrptDomainBlock-v2.2.ps1'
+$ToolVersion = '2.2'
 $Tag = 'RMMBlockTest'
 $SinkholeNameServer = '127.0.0.1'
 
@@ -49,7 +50,15 @@ $SinkholeNameServer = '127.0.0.1'
 # Each entry permits the domain and all of its subdomains.
 $AllowedDomains = @(
     'github.com',
-	'raw.githubusercontent.com'
+    'raw.githubusercontent.com'
+)
+
+# Local operator-maintained known-bad list.
+# Add one DNS domain or absolute URL per line. URLs are reduced to their DNS host.
+# Each accepted entry blocks the domain and all of its subdomains.
+$KnownBadEntries = @(
+    'https://cladesktop-apps.com/',
+    'https://teams-cloud.live/'
 )
 
 $Sources = @(
@@ -156,6 +165,59 @@ function ConvertTo-NrptNamespace {
         Reason = $null
         Original = $original
     }
+}
+
+function ConvertTo-KnownBadDomain {
+    param([Parameter(Mandatory = $true)][string]$InputValue)
+
+    $original = $InputValue
+    $value = $InputValue.Trim().Trim('"').Trim("'")
+    if ([string]::IsNullOrWhiteSpace($value)) {
+        return [pscustomobject]@{ IsValid = $false; Domain = $null; Reason = 'Empty entry'; Original = $original }
+    }
+    if ($value.StartsWith('#') -or $value.StartsWith(';')) {
+        return [pscustomobject]@{ IsValid = $false; Domain = $null; Reason = 'Comment entry'; Original = $original }
+    }
+
+    $candidate = $value
+    if ($candidate -match '^[a-z][a-z0-9+.-]*://') {
+        $parsedUri = $null
+        if (-not [System.Uri]::TryCreate($candidate, [System.UriKind]::Absolute, [ref]$parsedUri)) {
+            return [pscustomobject]@{ IsValid = $false; Domain = $null; Reason = 'URL could not be parsed'; Original = $original }
+        }
+        if ([string]::IsNullOrWhiteSpace($parsedUri.DnsSafeHost)) {
+            return [pscustomobject]@{ IsValid = $false; Domain = $null; Reason = 'URL does not contain a DNS host'; Original = $original }
+        }
+        $candidate = $parsedUri.DnsSafeHost
+    }
+
+    $normalized = ConvertTo-NrptNamespace -InputValue $candidate
+    if (-not $normalized.IsValid) {
+        return [pscustomobject]@{ IsValid = $false; Domain = $null; Reason = $normalized.Reason; Original = $original }
+    }
+    return [pscustomobject]@{
+        IsValid = $true
+        Domain = $normalized.Namespace.TrimStart('.')
+        Reason = $null
+        Original = $original
+    }
+}
+
+function Get-LocalKnownBadEntries {
+    param([Parameter(Mandatory = $true)][AllowEmptyCollection()][string[]]$Entries)
+    Write-Status "Validating local known-bad entries: $($Entries.Count)" 'Stage'
+    $domains = New-Object 'System.Collections.Generic.List[string]'
+    foreach ($entry in $Entries) {
+        $result = ConvertTo-KnownBadDomain -InputValue $entry
+        if (-not $result.IsValid) {
+            throw "Invalid local known-bad entry '$entry': $($result.Reason). No NRPT rules were changed."
+        }
+        if (-not $domains.Contains($result.Domain)) {
+            $domains.Add($result.Domain) | Out-Null
+            Write-Status "Known-bad domain normalized: $($result.Domain)" 'Success'
+        }
+    }
+    return $domains.ToArray()
 }
 
 function Test-IsAllowedNamespace {
@@ -289,8 +351,9 @@ Write-Host ''
 Write-Status "$ToolName v$ToolVersion" 'Info'
 Write-Status "NRPT rule tag: $Tag" 'Info'
 Write-Status "Sinkhole DNS server: $SinkholeNameServer" 'Info'
-Write-Status 'Blocked domains are downloaded live; the local allow-list is intentionally hard-coded and user-editable.' 'Info'
+Write-Status 'Downloaded sources are merged with a local operator-maintained known-bad list; the allow-list takes final precedence.' 'Info'
 Write-Status "Local allow-list entries: $($AllowedDomains.Count)" 'Info'
+Write-Status "Local known-bad entries: $($KnownBadEntries.Count)" 'Info'
 foreach ($allowedDomain in $AllowedDomains) {
     Write-Status "Allow-listed domain and subdomains: $allowedDomain" 'Success'
 }
@@ -341,6 +404,10 @@ Write-Status "Validated allow-list entries: $($normalizedAllowedDomains.Count)."
 
 $catalog = @{}
 $rejectedEntries = New-Object 'System.Collections.Generic.List[object]'
+
+# Merge local known-bad domains into the same validated catalog as remote sources.
+$normalizedKnownBadDomains = @(Get-LocalKnownBadEntries -Entries $KnownBadEntries)
+Add-SourceEntriesToCatalog -Catalog $catalog -Rejected $rejectedEntries -SourceName 'Local known-bad domains' -Entries $normalizedKnownBadDomains
 
 foreach ($source in $Sources) {
     Write-Host ''
@@ -487,7 +554,7 @@ Write-Status "Excluded by local allow-list: $($allowListedCatalogKeys.Count)" 'S
 Write-Status "Previously blocked allow-listed rules removed: $allowListedRulesRemoved" 'Success'
 Write-Host ''
 Write-Status "Review rules with: Get-DnsClientNrptRule | Where-Object Comment -eq '$Tag'" 'Info'
-Write-Status "Remove rules with: .\rmm_nrpt_block.ps1 -Remove" 'Info'
+Write-Status "Remove rules with: .\Set-DynamicNrptDomainBlock-v2.2.ps1 -Remove" 'Info'
 Write-Status "Test GitHub with: Resolve-DnsName 'github.com'" 'Info'
 
 if ($failedCount -gt 0 -or $allowListedRuleRemovalFailures -gt 0) { exit 1 }
