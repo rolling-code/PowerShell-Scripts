@@ -16,7 +16,7 @@ Entries with documentation in this README jump to the corresponding section belo
     - [Check-ModularDS.ps1](#check-modulardsps1)
     - [crt_enum.ps1](#crt_enumps1)
     - [generic/Set-DynamicNrptDomainBlock.ps1](#set-dynamicnrptdomainblockps1)
-    - [WP-CVE-Validator-v2.0.8.ps1](#wp-cve-validator-v208ps1)
+    - [WP-CVE-Validator.ps1](#wp-cve-validator.ps1)
   - 📂 **[Azure Active Directory/](#section-azure-active-directory)**
     - [get_az_token.ps1](#get_az_tokenps1)
     - [aadinternals_audit6.ps1](#aadinternals_audit6ps1)
@@ -1120,7 +1120,7 @@ Populate table with your CVEs
 ```
 Run lookup.ps1
 
-### `WP-CVE-Validator-v2.0.8.ps1`
+### `WP-CVE-Validator.ps1`
 
 WP-CVE-Validator is an evidence-first PowerShell tool for safely assessing public WordPress deployments against a curated CVE catalog.
 
@@ -1136,13 +1136,50 @@ The tool:
 - Deduplicates aggregate results by canonical application.
 
 No authentication, account creation, SQL payloads, file uploads, code execution, or direct-to-origin testing is performed.
+It checks for these 11 CVEs
+
+WordPress core
+CVE-2017-5487
+ WordPress REST API user disclosure.
+
+CVE-2026-60137
+ WordPress WP_Query SQL-injection eligibility involving author__not_in.
+
+CVE-2026-63030
+ WordPress REST batch-route confusion.
+
+CVE-2026-65640
+ Imagick/Ghostscript PostScript upload RCE eligibility.
+
+CVE-2026-87902
+ WordPress page-template path traversal/LFI with conditional RCE eligibility.
+
+WordPress plugins
+CVE-2026-1492
+ WPEverest User Registration plugin privilege-escalation exposure through version 5.1.2.
+
+CVE-2026-19949
+ All-in-One WP Migration plugin vulnerability correlation.
+
+CVE-2026-83627
+ Hummingbird Performance plugin vulnerability correlation.
+
+CVE-2026-78006
+ The Events Calendar plugin vulnerability correlation.
+
+PHP core
+CVE-2026-109618
+ PHP remote code execution through out-of-memory corruption.
+
+CVE-2026-109619
+ PHP remote code execution through stale request-owned global state.
 
 ### Usage
 
 Create a text file containing one hostname or URL per line, then run:
 
 ```powershell
-.\WP-CVE-Validator-v2.0.8.ps1 `
+.\WP-CVE-Validator.ps1 `
     -DomainListPath '.\wordpress-domains.txt' `
     -Enable60137DifferentialProbe
 ```
