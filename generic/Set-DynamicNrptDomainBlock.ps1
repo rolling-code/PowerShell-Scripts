@@ -77,12 +77,16 @@ $Sources = @(
         Name = 'Phishing.Database permanent domains'
         Type = 'DomainList'
         Uri  = 'https://raw.githubusercontent.com/Phishing-Database/phishing/master/additions/permanent/domains.list'
-    },
+    }
+<# ,
+
+On Oct 22nd URLhaus shut down all keyless, public URLhaus download feeds !
+
     [pscustomobject]@{
         Name = 'URLhaus online malware hosts'
         Type = 'UrlhausZip'
         Uri  = 'https://urlhaus.abuse.ch/downloads/csv/'
-    }
+    }#>
 )
 
 function Show-ProtectionBanner {
