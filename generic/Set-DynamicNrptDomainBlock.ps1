@@ -49,7 +49,9 @@ $SinkholeNameServer = '127.0.0.1'
 # Each entry permits the domain and all of its subdomains.
 $AllowedDomains = @(
     'github.com',
-    'raw.githubusercontent.com'
+    'raw.githubusercontent.com',
+    'pypi.org',
+    'pythonhosted.org'
 )
 
 # Local operator-maintained known-bad list. URLs are reduced to DNS hosts.
