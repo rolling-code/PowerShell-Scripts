@@ -13,7 +13,6 @@ Entries with documentation in this README jump to the corresponding section belo
     - [DisableWindowsDefender.ps1](#disablewindowsdefenderps1)
     - [kickoff.ps1](#kickoffps1)
     - [SetAdaptorMetricWired_Highest.ps1](#setadaptormetricwired_highestps1)
-    - [Check-ModularDS.ps1](#check-modulardsps1)
     - [crt_enum.ps1](#crt_enumps1)
     - [generic/Set-DynamicNrptDomainBlock.ps1](#set-dynamicnrptdomainblockps1)
     - [WP-CVE-Validator.ps1](#wp-cve-validatorps1)
@@ -994,12 +993,6 @@ Use like so to see what changes it will perform without applying them:
 ```powershell
 .\SetAdaptorMetricWired_Highest.ps1 -Trial
 ```
-
----
-### `Check-ModularDS.ps1`
-
-Check if a WordPress web site is vulnerable to: CVE-2026-23550
-https://modulards.com/a-note-on-the-recent-modular-ds-security-update/
 
 ---
 ### `crt_enum.ps1`
