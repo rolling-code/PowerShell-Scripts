@@ -20,11 +20,11 @@ Entries with documentation in this README jump to the corresponding section belo
   - 📂 **[Azure Active Directory/](#section-azure-active-directory)**
     - [get_az_token.ps1](#get_az_tokenps1)
     - [aadinternals_audit6.ps1](#aadinternals_audit6ps1)
-    - [get_policies.ps1](Azure%20Active%20Directory/get_policies.ps1)
-    - [grant_consent_MSGraph.ps1](Azure%20Active%20Directory/grant_consent_MSGraph.ps1)
+    - [get_policies.ps1](#get_policiesps1)
+    - [grant_consent_MSGraph.ps1](#grant_consent_msgraphps1)
     - [sendmail.py](#sendmailpy)
     - [Check-AllPowerfulAzurePerms3.ps1](#check-allpowerfulazureperms3ps1)
-    - [enum_entra_admins.ps1](Azure%20Active%20Directory/enum_entra_admins.ps1)
+    - [enum_entra_admins.ps1](#enum_entra_adminsps1)
     - [find_disabled_accounts.ps1](#find_disabled_accountsps1)
     - [Watch-AzAutomationRunbookJob.ps1](#watch-azautomationrunbookjobps1)
     - [Audit-AllUsersRolePerms.ps1](#audit-allusersrolepermsps1)
@@ -44,7 +44,7 @@ Entries with documentation in this README jump to the corresponding section belo
     - [New-MultiTenantOAuthConsentTrainingUrl.ps1](#new-multitenantoauthconsenttrainingurlps1)
     - [New-OAuthRedirectMismatchTrainingUrl.ps1](#new-oauthredirectmismatchtrainingurlps1)
     - [New-OrgOnlyOAuthConsentTrainingUrl.ps1](#new-orgonlyoauthconsenttrainingurlps1)
-    - [Get-AppSecurityWeeklyDigest-v1.0.3.ps1](#Get-AppSecurityWeeklyDigest-v1.0.3ps1)
+    - [Get-AppSecurityWeeklyDigest-v1.0.3.ps1](#get-appsecurityweeklydigest-v103ps1)
   - 📂 **[On-Prem Active Directory/](#section-on-prem-active-directory)**
     - [ad_object_permissions3.ps1](#get-adprincipalpermissionsps1)
     - [delegated_rights.ps1](#delegated_rightsps1)
@@ -56,12 +56,12 @@ Entries with documentation in this README jump to the corresponding section belo
     - [check_smb_settings_all_domain_joined_pc_using_ps_remoting.ps1](#check_smb_settings_all_domain_joined_pc_using_ps_remotingps1)
     - [check_smb_settings_all_domain_joined_pc_using_wmi_and_remote_registry.ps1](#check_smb_settings_all_domain_joined_pc_using_wmi_and_remote_registryps1)
     - [inactive_users.ps1](#inactive_usersps1)
-    - [is_ldap_signing_enabled.ps1](On-Prem%20Active%20Directory/is_ldap_signing_enabled.ps1)
+    - [is_ldap_signing_enabled.ps1](#is_ldap_signing_enabledps1)
     - [replicate_permissions.ps1](#replicate_permissionsps1)
     - [replicated_rights2.ps1](#replicated_rights2ps1)
     - [setNoPreauth.ps1](#setnopreauthps1)
-    - [AD_Audit_Script.ps1](On-Prem%20Active%20Directory/AD_Audit_Script.ps1)
-    - [GpoAclAudit.ps1](On-Prem%20Active%20Directory/GpoAclAudit.ps1)
+    - [AD_Audit_Script.ps1](#ad_audit_scriptps1)
+    - [GpoAclAudit.ps1](#gpoaclauditps1)
     - [GetUsersAndTheirManagedByMachines.ps1](#getusersandtheirmanagedbymachinesps1)
     - [test_shares_read_write.ps1](#test_shares_read_writeps1)
     - [analyze_gpo3.ps1](#analyze_gpo3ps1)
@@ -1019,10 +1019,10 @@ Creates and maintains local Windows Name Resolution Policy Table (NRPT) sinkhole
 
    Provides community-maintained phishing-domain intelligence. As with any community feed, entries may change or occasionally require local review.
 
-3. **URLhaus malware URLs**  
+3. <s>**URLhaus malware URLs**  
    `https://urlhaus.abuse.ch/downloads/csv/`
 
-   Downloads the URLhaus ZIP archive, validates and extracts the included data file, keeps records marked `online`, extracts DNS hostnames, removes duplicates, rejects literal IP addresses, and excludes shared hosting platforms that would be unsafe to block as complete DNS namespaces.
+   Downloads the URLhaus ZIP archive, validates and extracts the included data file, keeps records marked `online`, extracts DNS hostnames, removes duplicates, rejects literal IP addresses, and excludes shared hosting platforms that would be unsafe to block as complete DNS namespaces.</s> **Removed from the current script.**
 
 4. **Local operator-maintained known-bad list**
 
@@ -1040,12 +1040,12 @@ $KnownBadEntries = @(
 Before modifying NRPT, the script:
 
 - Downloads each remote source with retries and validates that content was received.
-- Downloads URLhaus as a binary ZIP archive, verifies the ZIP signature, extracts the archive, and validates the expected CSV schema.
-- Keeps only URLhaus records currently marked `online`.
+- <s>Downloads URLhaus as a binary ZIP archive, verifies the ZIP signature, extracts the archive, and validates the expected CSV schema.</s> **Removed from the current script.**
+- <s>Keeps only URLhaus records currently marked `online`.</s> **Removed from the current script.**
 - Rejects literal IP addresses because NRPT controls DNS resolution and cannot block direct-IP connections.
 - Rejects unsupported embedded wildcard, regular-expression, path, CIDR, port-qualified, and malformed DNS entries.
 - Deduplicates domains while preserving source attribution.
-- Excludes multi-tenant shared hosting platforms from URLhaus-derived whole-domain blocking.
+- <s>Excludes multi-tenant shared hosting platforms from URLhaus-derived whole-domain blocking.</s> **Removed from the current script.**
 - Applies the local allow-list as the final override.
 - Reads existing Windows NRPT rules and skips namespaces that are already present.
 - Removes rules created by this script if a namespace later becomes allow-listed.
@@ -1060,7 +1060,7 @@ $AllowedDomains = @(
 )
 ```
 
-Shared hosting exclusions are maintained separately from the allow-list. This distinction means that a platform can be excluded from broad URLhaus-derived DNS blocking without being described as universally trusted.
+<s>Shared hosting exclusions are maintained separately from the allow-list. This distinction means that a platform can be excluded from broad URLhaus-derived DNS blocking without being described as universally trusted.</s> **Historical URLhaus behavior; removed from the current script.**
 
 #### Run the script
 
