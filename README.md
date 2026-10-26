@@ -44,6 +44,7 @@ Entries with documentation in this README jump to the corresponding section belo
     - [New-MultiTenantOAuthConsentTrainingUrl.ps1](#new-multitenantoauthconsenttrainingurlps1)
     - [New-OAuthRedirectMismatchTrainingUrl.ps1](#new-oauthredirectmismatchtrainingurlps1)
     - [New-OrgOnlyOAuthConsentTrainingUrl.ps1](#new-orgonlyoauthconsenttrainingurlps1)
+    - [Get-AppSecurityWeeklyDigest-v1.0.3.ps1](#Get-AppSecurityWeeklyDigest-v1.0.3ps1)
   - 📂 **[On-Prem Active Directory/](#section-on-prem-active-directory)**
     - [ad_object_permissions3.ps1](#get-adprincipalpermissionsps1)
     - [delegated_rights.ps1](#delegated_rightsps1)
@@ -430,22 +431,15 @@ The demonstration requires an application registration owned by the operator or 
 ```
 
 ---
-### `New-OrgOnlyOAuthConsentTrainingUrl.ps1`
+### `Get-AppSecurityWeeklyDigest-v1.0.3.ps1`
 
-Generates a constrained, tenant-specific Microsoft identity platform authorization URL for an organization-only OAuth consent-awareness demonstration. 
+Entra App audit. Generates a CSV file for each of:
+- Expired secrets
+- Apps with no owner
+- Apps 365+ days old
+- High-risk permissions
 
-The scenario shows how an application registered in the user's own Microsoft Entra tenant can present a genuine Microsoft consent screen. It teaches participants to validate the application publisher, requested permissions, and expected business purpose rather than trusting the sign-in page or application name alone. 
 
-The application and redirect URI must already be configured by the authorized operator. The script does not create or modify the application registration, deliver the URL, open a browser, exchange authorization codes, acquire tokens, or access user data.
-
-```powershell
-.\New-OrgOnlyOAuthConsentTrainingUrl.ps1 `
-    -TenantId "00000000-0000-0000-0000-000000000000" `
-    -ClientId "11111111-1111-1111-1111-111111111111" `
-    -RedirectUri "https://rolling-code.github.io/PowerShell-Scripts/oauth-training-success.html" `
-    -CopyToClipboard `
-    -AcknowledgeAuthorizedTraining
-```
 
 ---
 #### Watch-AzAutomationRunbookJob.ps1
@@ -590,6 +584,24 @@ Conditional Access policies without Token Protection.
 
 ```powershell
 .\Test-EntraTokenProtectionPolicies.ps1
+```
+
+---
+### `New-OrgOnlyOAuthConsentTrainingUrl.ps1`
+
+Generates a constrained, tenant-specific Microsoft identity platform authorization URL for an organization-only OAuth consent-awareness demonstration. 
+
+The scenario shows how an application registered in the user's own Microsoft Entra tenant can present a genuine Microsoft consent screen. It teaches participants to validate the application publisher, requested permissions, and expected business purpose rather than trusting the sign-in page or application name alone. 
+
+The application and redirect URI must already be configured by the authorized operator. The script does not create or modify the application registration, deliver the URL, open a browser, exchange authorization codes, acquire tokens, or access user data.
+
+```powershell
+.\New-OrgOnlyOAuthConsentTrainingUrl.ps1 `
+    -TenantId "00000000-0000-0000-0000-000000000000" `
+    -ClientId "11111111-1111-1111-1111-111111111111" `
+    -RedirectUri "https://rolling-code.github.io/PowerShell-Scripts/oauth-training-success.html" `
+    -CopyToClipboard `
+    -AcknowledgeAuthorizedTraining
 ```
 
 
