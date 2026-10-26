@@ -1148,8 +1148,6 @@ Run lookup.ps1
 
 ### `WP-CVE-Validator.ps1`
 
-**Repository path:** `generic/WP-CVE-Validator.ps1`
-
 WP-CVE-Validator is an evidence-first PowerShell tool for safely assessing public WordPress deployments against a curated CVE catalog.
 
 #### What the tool does
@@ -1160,16 +1158,21 @@ WP-CVE-Validator is an evidence-first PowerShell tool for safely assessing publi
 - Performs safe, read-only behavioral and prerequisite checks.
 - Distinguishes confirmed behavior, affected versions, inconclusive results, and observed exposure.
 - Identifies Cloudflare response-path indicators without assuming complete origin protection.
+- Performs evidence-based managed-hosting attribution using DNS records, reverse DNS, and HTTP response headers.
+- Reports the hosting provider, confidence, and supporting evidence when a recognized managed provider is identified.
+- Currently recognizes signals associated with Kinsta, WordPress.com / Automattic, OpenSRS / Tucows Hosted Email, Combell, Pantheon, Newfold Digital / Netfirms, Nexicom, WP Engine, and Cloudways.
+- Reports managed hosting as `Unknown` when public evidence does not support a reliable provider attribution.
 - Validates test URL ownership to prevent cross-target evidence contamination.
 - Deduplicates aggregate results by canonical application.
 
 #### Safety boundaries
 
 The validator does **not** perform authentication, account creation, SQL payload delivery, file uploads, code execution, or direct-to-origin testing.
+The CVE-2026-60137 differential prerequisite probe is always enabled. It uses only safe, non-SQL malformed input to identify publicly reachable candidate paths and does not attempt SQL injection.
 
 #### CVE coverage
 
-The current catalog contains **11 CVEs** across WordPress core, WordPress plugins, and PHP core.
+The current catalog contains **12 CVEs** across WordPress core, WordPress plugins, and PHP core.
 
 ##### WordPress core
 
@@ -1183,6 +1186,7 @@ The current catalog contains **11 CVEs** across WordPress core, WordPress plugin
 
 - **CVE-2026-1492:** WPEverest User Registration plugin privilege-escalation exposure through version 5.1.2.
 - **CVE-2026-19949:** All-in-One WP Migration plugin vulnerability correlation.
+- **CVE-2026-23550:** Modular DS / Modular Connector plugin unauthenticated privilege-escalation exposure through version 2.5.1; version 2.5.2 is treated as the first fixed release.
 - **CVE-2026-83627:** Hummingbird Performance plugin vulnerability correlation.
 - **CVE-2026-78006:** The Events Calendar plugin vulnerability correlation.
 
@@ -1198,7 +1202,6 @@ Create a text file containing one hostname or URL per line, then run:
 ```powershell
 .\WP-CVE-Validator.ps1 `
     -DomainListPath '.\wordpress-domains.txt' `
-    -Enable60137DifferentialProbe
 ```
 
 #### Output
@@ -1209,4 +1212,6 @@ The tool produces:
 - A matching JSON evidence report.
 - A CVE coverage ledger.
 - Console summaries for raw targets and deduplicated canonical applications.
+- Cloudflare response-path evidence.
+- Managed-hosting provider attribution, confidence, DNS evidence, reverse-DNS evidence, and relevant HTTP-header evidence.
 - Automatic CSV/JSON integrity and URL-ownership validation.
