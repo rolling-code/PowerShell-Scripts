@@ -12,6 +12,7 @@ Entries with documentation in this README jump to the corresponding section belo
     - [domains2ipsipv4Only.ps1](#domains2ipsipv4onlyps1)
     - [DisableWindowsDefender.ps1](#disablewindowsdefenderps1)
     - [kickoff.ps1](#kickoffps1)
+    - [lookup.ps1](#lookupps1)
     - [SetAdaptorMetricWired_Highest.ps1](#setadaptormetricwired_highestps1)
     - [crt_enum.ps1](#crt_enumps1)
     - [generic/Set-DynamicNrptDomainBlock.ps1](#set-dynamicnrptdomainblockps1)
@@ -45,7 +46,7 @@ Entries with documentation in this README jump to the corresponding section belo
     - [New-OrgOnlyOAuthConsentTrainingUrl.ps1](#new-orgonlyoauthconsenttrainingurlps1)
     - [Get-AppSecurityWeeklyDigest-v1.0.3.ps1](#get-appsecurityweeklydigest-v103ps1)
   - 📂 **[On-Prem Active Directory/](#section-on-prem-active-directory)**
-    - [ad_object_permissions3.ps1](#get-adprincipalpermissionsps1)
+    - [Get-AdPrincipalPermissions.ps1](#get-adprincipalpermissionsps1)
     - [delegated_rights.ps1](#delegated_rightsps1)
     - [servers_get_smb.ps1](#servers_get_smbps1)
     - [gpo_delegation_check2.ps1](#gpo_delegation_check2ps1)
