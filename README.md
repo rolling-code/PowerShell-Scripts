@@ -12,7 +12,7 @@ Entries with documentation in this README jump to the corresponding section belo
     - [domains2ipsipv4Only.ps1](#domains2ipsipv4onlyps1)
     - [DisableWindowsDefender.ps1](#disablewindowsdefenderps1)
     - [kickoff.ps1](#kickoffps1)
-    - [lookup.ps1](#lookupps1)
+    - [Invoke-CveRiskAssessment.ps1](#invoke-cveriskassessmentps1)
     - [SetAdaptorMetricWired_Highest.ps1](#setadaptormetricwired_highestps1)
     - [crt_enum.ps1](#crt_enumps1)
     - [generic/Set-DynamicNrptDomainBlock.ps1](#set-dynamicnrptdomainblockps1)
@@ -1131,25 +1131,102 @@ Remove all NRPT rules created by the script:
 
 
 ---
-### `lookup.ps1`
+### `Invoke-CveRiskAssessment.ps1`
+  
+Performs a read-only, evidence-driven CVE assessment from a plain-text list of CVE identifiers. The script automatically downloads or reuses the current CISA Known Exploited Vulnerabilities catalog and FIRST EPSS daily feed, retrieves NVD CVSS and description evidence, and exports structured CSV, JSON, Excel, and feed-manifest artifacts.
 
-Download KEV JSON 
+The script deliberately separates:
+- **CVSS** technical severity
+- **EPSS** predicted exploitation probability and percentile
+- **CISA KEV** confirmed known exploitation
+- **Asset applicability** based on operator-supplied evidence
+- **Contextual priority** based on applicability, exposure, business criticality, and compensating controls
 
-`Invoke-WebRequest -Uri "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json" -OutFile kev.json`
+Missing asset context remains **Unknown**. The tool does not infer that a CVE affects an asset merely because the CVE appears in KEV, has a high EPSS score, or has a high CVSS score.
 
-Download EPSS CSV 
+#### Input
 
-`Invoke-WebRequest -Uri "https://epss.cyentia.com/epss_scores-current.csv.gz" -OutFile epss.gz`
+Create a text file containing one CVE identifier per line. Blank lines and lines beginning with `#` are ignored. Duplicate identifiers are removed automatically.
 
-Populate table with your CVEs
+```text
+CVE-2021-44228
+CVE-2023-34362
+CVE-2024-3400
+```
+
+Run from the generic directory:
 
 ```powershell
-[PSCustomObject]@{ 
-        Asset = "foo - Edge Browser" 
-        CVE   = "CVE-2026-7902" 
-    }, 
+Set-Location '.\generic'
+
+.\Invoke-CveRiskAssessment.ps1 `
+    -CveListPath '.\cves.txt'
 ```
-Run lookup.ps1
+
+#### Optional asset context
+
+Asset context is optional. When `-ContextCsvPath` is omitted, the script performs threat-intelligence enrichment and creates `Asset-Context-Template.csv` in the output directory. The generated template can then be populated with evidence for:
+
+- Asset exposure
+- Affected-version confirmation
+- Reachability
+- Exploit prerequisites
+- Compensating controls
+- Component presence in the deployed artifact
+- Business criticality
+- Evidence and evidence source
+
+Run a context-aware assessment:
+
+```powershell
+.\Invoke-CveRiskAssessment.ps1 `
+    -CveListPath '.\cves.txt' `
+    -ContextCsvPath '.\Asset-Context.csv'
+```
+
+#### Data sources and caching
+
+The script automatically:
+- Downloads the CISA KEV JSON catalog.
+- Downloads and decompresses the FIRST EPSS daily CSV.
+- Retrieves NVD CVE records, descriptions, status, publication dates, and available CVSS metrics.
+- Caches KEV and EPSS feeds under the current user's local application-data directory for 24 hours by default.
+- Records source URLs, timestamps, record counts, file hashes, input-file hash, and NVD usage in a feed manifest.
+
+Use `-ForceFeedRefresh` to download fresh KEV and EPSS files regardless of cache age. Set the `NVD_API_KEY` environment variable when an NVD API key is available; do not place API keys in scripts or repositories.
+
+#### Outputs
+
+Each run creates a timestamped output directory containing:
+- A detailed CSV assessment
+- Matching JSON evidence
+- A formatted Excel workbook
+- A feed-manifest JSON file
+- An automatically generated asset-context template when no context CSV is supplied
+- Invalid-input and collection-error CSV files when applicable
+
+#### Interpretation
+
+Applicability is reported as:
+- **Confirmed**
+- **LikelyOrProbable**
+- **Inconclusive**
+- **NotConfirmed**
+
+Contextual priority is reported as:
+- **P1_CRITICAL**
+- **P2_HIGH**
+- **P3_MEDIUM**
+- **P4_LOW**
+- **VALIDATE_URGENTLY**
+- **VALIDATE**
+- **DEPRIORITIZE_PENDING_NEW_EVIDENCE**
+
+Priority is not derived from CVSS, EPSS, or KEV alone. A confirmed, Internet-accessible vulnerability requires applicable component, version, reachability, prerequisite, and context evidence before the script assigns a remediation priority. A negative or not-detected result is point-in-time evidence and does not prove permanent absence.
+
+The script requires PowerShell 7.2 or later and the ImportExcel module. ImportExcel is installed for the current user when missing unless `-DoNotInstallMissingModules` is specified.
+
+This product uses data from the NVD API but is not endorsed or certified by the NVD.
 
 ### `WP-CVE-Validator.ps1`
 
