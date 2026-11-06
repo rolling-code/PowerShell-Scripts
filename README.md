@@ -17,6 +17,7 @@ Entries with documentation in this README jump to the corresponding section belo
     - [crt_enum.ps1](#crt_enumps1)
     - [generic/Set-DynamicNrptDomainBlock.ps1](#set-dynamicnrptdomainblockps1)
     - [WP-CVE-Validator.ps1](#wp-cve-validatorps1)
+- [SSH-CVE-Validator.ps1](#ssh-cve-validatorps1)
   - 📂 **[Azure Active Directory/](#section-azure-active-directory)**
     - [get_az_token.ps1](#get_az_tokenps1)
     - [aadinternals_audit6.ps1](#aadinternals_audit6ps1)
@@ -1366,3 +1367,120 @@ The validator produces:
 - The `/wp-content/upgrade/` condition is transient. A clean point-in-time response cannot prove that the vulnerable window never exists.
 - Plugin presence without a reliable version remains inconclusive.
 - The tool does not replace authenticated configuration review, source-code review, server inventory, log analysis, or controlled nonproduction exploitation.
+
+#### SSH-CVE-Validator.ps1
+
+`SSH-CVE-Validator.ps1` is an evidence-first, read-only PowerShell tool for validating public SSH and OpenSSH exposure against a curated server-side CVE catalog. Version 1.2.4 combines direct SSH banner collection, Nmap protocol negotiation, IP-and-port endpoint deduplication, hosting attribution, and current NVD CVSS, CISA Known Exploited Vulnerabilities, and FIRST EPSS threat intelligence.
+
+The validator separates asset applicability from general threat severity. A version banner is treated as an evidence lead rather than proof of vulnerability. Confirmed protocol conditions, affected-version evidence, platform exclusions, missing server-side prerequisites, provider ownership, and point-in-time reachability are reported separately.
+
+##### What the tool does
+
+- Accepts an IONIX action-item CSV or a text file containing one hostname, IP address, or `host:port` target per line.
+- Reads nonstandard SSH ports from IONIX `Technical Details`, including TCP/2222.
+- Resolves each input to a public IP and deduplicates active testing by unique `IP:port` endpoint.
+- Reuses SSH, Nmap, authentication, algorithm, and CVE evidence for DNS aliases that resolve to an endpoint already assessed.
+- Retains hostname-level evidence and produces a second endpoint-level report containing primary names and aliases.
+- Collects the SSH protocol identification banner without authenticating.
+- Uses Nmap `ssh2-enum-algos` and `ssh-auth-methods` to collect advertised algorithms and authentication methods.
+- Detects Internet-reachable SSH password authentication and highlights it as an exposure requiring review.
+- Identifies OpenSSH versions and platform indicators such as Ubuntu, Debian, Alpine Linux, FreeBSD, or Windows when disclosed in the banner.
+- Attributes hosting provider and network owner using validated IP mappings, DNS, authoritative nameservers, and reverse DNS.
+- Downloads or reuses the current CISA KEV catalog and FIRST EPSS daily feed.
+- Retrieves NVD CVSS scores, severity, vectors, and scoring sources for cataloged CVEs.
+- Caches KEV, EPSS, and NVD evidence under `%LOCALAPPDATA%\SSH-CVE-Validator\ThreatCache` for 24 hours by default.
+- Exports hostname-level and endpoint-level CSV and JSON evidence, a coverage ledger, and a threat-intelligence manifest.
+- Displays CVSS, KEV, EPSS probability, EPSS percentile, and evidence-based priority only when an endpoint is confirmed affected.
+
+##### Console presentation
+
+- **Green:** Reachable service, known hosting attribution, fixed or unaffected version, platform not affected, Terrapin strict-key-exchange mitigation present, or prerequisite not observed.
+- **Yellow:** Password authentication, affected-version evidence, missing prerequisites, unknown vendor patch status, provider follow-up, or inconclusive results.
+- **Red:** TCP failure, timeout, or unreachable SSH endpoint.
+- **Magenta `[EXPOSURE]`:** Reproduced security-relevant behavior such as Internet-reachable password authentication or confirmed Terrapin protocol prerequisites.
+
+A confirmed endpoint/CVE pair receives a current threat summary:
+
+```text
+[THREAT] CVE-2023-48795 | CVSS 5.9 MEDIUM |
+CISA KEV: NO | EPSS: <current probability>% |
+Percentile: <current percentile>%
+[!] Priority: CONFIRMED AFFECTED + HIGH EPSS - REMEDIATE
+```
+
+High CVSS, KEV status, or EPSS probability alone does not cause the tool to declare an endpoint affected.
+
+##### Vulnerability coverage
+
+Version 1.2.4 checks five SSH or OpenSSH CVEs:
+
+- **CVE-2023-48795, Terrapin:** Evaluates advertised SSH algorithms for strict key exchange, ChaCha20-Poly1305, CBC ciphers, and Encrypt-then-MAC combinations without packet manipulation or exploitation.
+- **CVE-2024-6387, regreSSHion:** Identifies OpenSSH versions in the upstream regression range while preserving platform, `LoginGraceTime`, and vendor-backport limitations.
+- **CVE-2025-26466:** Identifies affected upstream OpenSSH versions while preserving vendor patch and `PerSourcePenalties` limitations.
+- **CVE-2026-123158:** Requires evidence of Linux with musl libc, PAM disabled, password authentication enabled, relevant local-account state, and unpatched package status. Disclosed Ubuntu and other non-musl platforms are not applicable.
+- **CVE-2026-60000:** Correlates affected versions with observed GSSAPI authentication support while retaining vendor-package and effective-configuration limitations.
+
+##### Endpoint deduplication
+
+The cache key is the resolved public IP plus TCP port. `192.0.2.10:22` and `192.0.2.10:2222` are distinct endpoints, while multiple DNS names resolving to `192.0.2.10:22` are actively assessed once. Aliases remain in hostname-level output and are consolidated in the endpoint-level `Aliases` field.
+
+##### Safety boundaries
+
+The validator does **not** authenticate, submit credentials, brute-force accounts, attempt the CVE-2026-123158 long-password bypass, manipulate SSH packets, execute commands, upload files, or change SSH, PAM, firewall, account, key, or package configuration.
+
+Nmap uses a deliberately nonexistent probe account to request server-advertised authentication methods. When a server returns no methods for that account, the result remains `Unknown` rather than being treated as password authentication disabled.
+
+##### Input and usage
+
+Run against an IONIX action-item CSV:
+
+```powershell
+Set-Location '.\generic'
+
+.\SSH-CVE-Validator.ps1 `
+    -InputPath '.\IONIX-Open-Action-Items.csv'
+```
+
+Minimal CSV:
+
+```csv
+Asset Name,Technical Details
+ssh.example.com,"{'port': 22}"
+192.0.2.10,"{'port': 2222}"
+```
+
+Plain-text input is also supported:
+
+```text
+ssh.example.com
+192.0.2.10:2222
+[2001:db8::10]:22
+```
+
+Use `-SkipNmap` only when banner and reachability evidence are sufficient. Skipping Nmap prevents fresh authentication-method and SSH-algorithm validation, including deterministic Terrapin assessment.
+
+##### Threat intelligence and caching
+
+The validator downloads or reuses the CISA KEV JSON catalog and FIRST EPSS daily CSV, retrieves NVD CVE and CVSS evidence, caches threat intelligence for 24 hours, and records feed paths, source URLs, hashes, record counts, timestamps, and NVD usage. Use `-ForceThreatFeedRefresh` for fresh KEV and EPSS data. Set `NVD_API_KEY` when available; do not place API keys in scripts or repositories.
+
+##### Output
+
+Each run produces:
+
+- `SSH-CVE-Validator-Results-YYYYMMDD-HHMMSS.csv` and matching hostname-level JSON.
+- `SSH-CVE-Validator-Endpoints-YYYYMMDD-HHMMSS.csv` and matching endpoint-level JSON.
+- `SSH-CVE-Validator-Coverage-v1.2.4.csv`.
+- `SSH-CVE-Validator-Threat-Manifest-YYYYMMDD-HHMMSS.json`.
+
+The hostname output preserves source names and IONIX identifiers. The endpoint output reports one row per unique IP:port endpoint with aliases.
+
+##### Interpretation and limitations
+
+- A banner confirms the advertised version string, not the effective vendor patch level.
+- Linux distributions and hosting providers may backport fixes without changing the banner.
+- Terrapin protocol applicability can be established from negotiated algorithms without reproducing packet manipulation or impact.
+- CVE-2026-123158 requires server-side libc, PAM, package, and account evidence that cannot be established from a public banner alone.
+- Password authentication is a security-relevant exposure, not proof of compromise or of a specific CVE.
+- Unreachable is point-in-time evidence and does not prove permanent absence.
+- Hosting attribution helps identify likely remediation ownership, while account-level users, keys, shell access, and provider escalation may remain with the customer.
+- The tool does not replace authenticated configuration review, package inventory, server logs, provider confirmation, or controlled nonproduction exploitation.
