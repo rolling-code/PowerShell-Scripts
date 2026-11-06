@@ -180,6 +180,4 @@ $ScannerPython = 'C:\Tools\PythonSecurity\.scanner-venv\Scripts\python.exe'
     ruff `
     pytest
 
-PUBLIC REPOSITORY NOTE
 
-The script contains no organization-specific repository names, domains, credentials, or tokens. Do not commit generated evidence, proprietary source, local paths containing personal information, or scanner archives to a public repository.
