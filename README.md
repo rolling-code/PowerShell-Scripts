@@ -17,7 +17,9 @@ Entries with documentation in this README jump to the corresponding section belo
     - [crt_enum.ps1](#crt_enumps1)
     - [generic/Set-DynamicNrptDomainBlock.ps1](#set-dynamicnrptdomainblockps1)
     - [WP-CVE-Validator.ps1](#wp-cve-validatorps1)
-- [SSH-CVE-Validator.ps1](#ssh-cve-validatorps1)
+    - [SSH-CVE-Validator.ps1](#ssh-cve-validatorps1)
+    - [Test-GitHubRepositorySecurity.ps1](#test-githubrepositorysecurityps1)
+    - [Invoke-PythonRepositorySecurityScan.ps1](#invoke-pythonrepositorysecurityscanps1)
   - 📂 **[Azure Active Directory/](#section-azure-active-directory)**
     - [get_az_token.ps1](#get_az_tokenps1)
     - [aadinternals_audit6.ps1](#aadinternals_audit6ps1)
@@ -1228,6 +1230,91 @@ Priority is not derived from CVSS, EPSS, or KEV alone. A confirmed, Internet-acc
 The script requires PowerShell 7.2 or later and the ImportExcel module. ImportExcel is installed for the current user when missing unless `-DoNotInstallMissingModules` is specified.
 
 This product uses data from the NVD API but is not endorsed or certified by the NVD.
+
+### `Test-GitHubRepositorySecurity.ps1`
+
+`Test-GitHubRepositorySecurity.ps1` performs a read-only assessment of security controls configured for one or more GitHub repositories. It uses the authenticated GitHub CLI session to collect repository and default-branch evidence, then reports whether key GitHub security capabilities are enabled, unavailable, or require additional validation.
+
+#### What the tool checks
+
+- Repository visibility and default-branch context.
+- Branch protection and repository rulesets governing the default branch.
+- GitHub code-scanning configuration and available analysis evidence.
+- Dependabot security-alert availability and configuration evidence.
+- Secret-scanning and push-protection availability where exposed by the GitHub API and current token permissions.
+- Collection limitations caused by repository plan, feature availability, API responses, or insufficient scoped access.
+
+The tool treats missing API evidence conservatively. A control is not reported as absent merely because the authenticated account cannot read the corresponding endpoint. Review results together with the permission and collection-status evidence shown in the report.
+
+#### Prerequisites
+
+- PowerShell 7 is recommended.
+- GitHub CLI (`gh`) must be installed.
+- `gh auth status` must show an authenticated account with access to the repositories being assessed.
+- The authenticated token must have sufficient repository and security-event visibility for the controls being queried.
+
+#### Usage
+
+Run from the generic directory and provide one or more repositories in `owner/name` format:
+
+```powershell
+Set-Location '.\generic'
+.\Test-GitHubRepositorySecurity.ps1 `
+    -Repository 'owner/first-repository', 'owner/second-repository'
+```
+
+#### Interpretation and limitations
+
+- A successful API response is stronger evidence than a repository setting inferred from public metadata.
+- `Not configured`, `not detected`, `unavailable`, and `access denied` are different outcomes and should not be treated as equivalent.
+- The assessment is point-in-time and read-only. It does not enable GitHub Advanced Security, create rulesets, change branch protection, dismiss alerts, or modify repository settings.
+- Repository access alone may not provide access to code-scanning, Dependabot, secret-scanning, or organization-level policy evidence.
+
+### `Invoke-PythonRepositorySecurityScan.ps1`
+
+`Invoke-PythonRepositorySecurityScan.ps1` orchestrates a repeatable local security scan of an already-cloned Python repository and consolidates the available scanner results into a practical review workflow. It reduces setup and reporting friction while preserving the evidence and limitations of each underlying scanner.
+
+#### What the tool does
+
+- Accepts the local path of a cloned Python repository.
+- Validates the local Python scanning environment before starting the assessment.
+- Runs the configured dependency and static-analysis scanners against the repository.
+- Continues through individual scanner failures where practical so that one unavailable tool does not discard all other results.
+- Collects scanner output and produces a consolidated report for technical review and evidence sharing.
+- Keeps scanner findings separate from the final pass/fail rationale so that unverified findings are not automatically treated as confirmed vulnerabilities.
+
+The workflow can use Bandit, pip-audit, Semgrep, and Trivy when those tools are installed and available in the configured environment. Each scanner provides different coverage, so dependency findings, source-code patterns, secrets, and repository or filesystem issues must be interpreted according to the tool that produced them.
+
+#### Prerequisites
+
+- The target repository must already be cloned locally.
+- PowerShell 7 is recommended.
+- Python and the repository-scanning virtual environment must be available as described in `Invoke-PythonRepositorySecurityScan-README-v1.1.1.txt`.
+- Scanner availability and authentication requirements vary by tool. Review warnings when a scanner is skipped, unavailable, or returns incomplete results.
+
+#### Usage
+
+Run from the generic directory and point the script to the cloned repository:
+
+```powershell
+Set-Location '.\generic'
+.\Invoke-PythonRepositorySecurityScan.ps1 `
+    -RepositoryPath 'C:\Path\To\ClonedRepository'
+```
+
+Review the script's comment-based help for its complete current parameter set:
+
+```powershell
+Get-Help .\Invoke-PythonRepositorySecurityScan.ps1 -Full
+```
+
+#### Interpretation and limitations
+
+- Scanner output is a lead for review, not automatic proof of exploitability.
+- Dependency findings require confirmation that the affected package and version are deployed or reachable in the application path.
+- Static-analysis findings require source review and, where appropriate, controlled reproduction of the reported behavior.
+- A clean result is limited to the tools, rules, files, dependencies, exclusions, and repository revision assessed during that run.
+- The orchestrator does not replace manual code review, deployment validation, runtime testing, or verification of compensating controls.
 
 ### `WP-CVE-Validator.ps1`
 
