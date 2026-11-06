@@ -5,7 +5,7 @@
     Creates or removes local Windows NRPT block rules from live RMM, phishing-domain, and malware-host sources.
 
 .DESCRIPTION
-    Downloads and normalizes domains from LOLRMM and Phishing.Database at runtime. The complete
+    Downloads and normalizes domains from LOLRMM, Phishing.Database, and the Helpdesk campaign IOC list at runtime. The complete
     namespace catalog is built, validated, deduplicated, and filtered through a local allow-list
     before Windows NRPT is modified.
 
@@ -28,7 +28,7 @@
     .\Set-DynamicNrptDomainBlock.ps1 -Remove
 
 .NOTES
-    Tool version: 2.3.2
+    Tool version: 2.4.0
 #>
 [CmdletBinding()]
 param(
@@ -41,7 +41,7 @@ $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 $ToolName = 'Set-DynamicNrptDomainBlock.ps1'
-$ToolVersion = '2.3.2'
+$ToolVersion = '2.4.0'
 $Tag = 'RMMBlockTest'
 $SinkholeNameServer = '127.0.0.1'
 
@@ -84,6 +84,11 @@ $Sources = @(
         Name = 'Phishing.Database permanent domains'
         Type = 'DomainList'
         Uri  = 'https://raw.githubusercontent.com/Phishing-Database/phishing/master/additions/permanent/domains.list'
+    },
+    [pscustomobject]@{
+        Name = 'Helpdesk campaign domains - November 2026'
+        Type = 'DomainList'
+        Uri  = 'https://raw.githubusercontent.com/anuragmalwranalysis/IOC/main/helpdesk%20Domain%20List%20-%20Nov%202026'
     }
 <# ,
 
@@ -99,8 +104,8 @@ On Oct 22nd URLhaus shut down all keyless, public URLhaus download feeds !
 function Show-ProtectionBanner {
     $banner = @'
 +--------------------------------------------------------------------------+
-|  Combining LOLRMM + Phishing.Database + URLhaus                         |
-|  to provide best-of-breed DNS protection!                               |
+|  Combining LOLRMM + Phishing.Database + Helpdesk campaign IOCs          |
+|  to provide layered, deduplicated DNS protection!                        |
 +--------------------------------------------------------------------------+
 '@
     Write-Host $banner -ForegroundColor Magenta
@@ -430,7 +435,7 @@ Show-ProtectionBanner
 Write-Status "$ToolName v$ToolVersion" 'Info'
 Write-Status "NRPT rule tag: $Tag" 'Info'
 Write-Status "Sinkhole DNS server: $SinkholeNameServer" 'Info'
-Write-Status 'LOLRMM, Phishing.Database, and URLhaus are downloaded live and merged with the local known-bad list.' 'Info'
+Write-Status 'LOLRMM, Phishing.Database, and the Helpdesk campaign IOC list are downloaded live and merged with the local known-bad list.' 'Info'
 Write-Status "Local allow-list entries: $($AllowedDomains.Count)" 'Info'
 Write-Status "Local known-bad entries: $($KnownBadEntries.Count)" 'Info'
 Write-Status "Shared infrastructure exclusions: $($SharedInfrastructureExclusions.Count)" 'Info'
