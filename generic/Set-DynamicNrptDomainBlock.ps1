@@ -52,11 +52,14 @@ $AllowedDomains = @(
     'raw.githubusercontent.com',
     'pypi.org',
     'pythonhosted.org',
-	'githubassets.com',
-	'objects.githubusercontent.com',
-	'release-assets.githubusercontent.com',
-	'media.githubusercontent.com',
-	'gist.githubusercontent.com'
+    'githubassets.com',
+    'objects.githubusercontent.com',
+    'release-assets.githubusercontent.com',
+    'media.githubusercontent.com',
+    'gist.githubusercontent.com',
+    'docs.google.com',
+    'drive.google.com',
+    'accounts.google.com'
 )
 
 # Local operator-maintained known-bad list. URLs are reduced to DNS hosts.
