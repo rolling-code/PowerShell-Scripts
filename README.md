@@ -934,20 +934,77 @@ Run from the repository root:
 ---
 ### `Test-Feeds3.ps1`
 
-Run this script to validate network filtering, from the machine it is run on.
- 
-It uses 3 feeds updated daily:<br>
-1- https://urlhaus.abuse.ch/api/#csv<br>
-2- https://raw.githubusercontent.com/openphish/public_feed/refs/heads/main/feed.txt<br>
-3- https://raw.githubusercontent.com/stamparm/ipsum/master/ipsum.txt<br>
- 
-URLhaus is a project from abuse.ch with the goal of sharing malicious URLs that are being used for malware distribution.
-OpenPhish receives URLs from multiple streams and analyzes them using its proprietary phishing detection algorithms.
-IPsum is a threat intelligence feed based on 30+ different publicly available lists of suspicious and/or malicious IP addresses. All lists are automatically retrieved and parsed on a daily (24h) basis and the final result is pushed to this repository. List is made of IP addresses together with a total number of (black)list occurrence (for each).
+**Repository path:** `generic/Test-Feeds3.ps1`  
+**Current version:** 2.0.1
 
-Run this from where we have some "security filtering" in place and get a good idea if the machine is protected! Enjoy!
- 
-(Run with -Quick to just do 25 lines)
+Performs a lightweight, read-only reachability comparison using current OpenPhish URL indicators and IPSum IP indicators. The script is intended to help assess whether a machine's DNS, network, browser-independent filtering, firewall, or upstream security controls appear to prevent connections to sampled threat-intelligence indicators.
+
+The tool reports **reachable** and **not reachable** rather than claiming that every failed connection was blocked. DNS resolution failure, NRPT, secure DNS, firewalls, routing, server shutdown, feed churn, hosting-provider takedown, or a closed TCP port can all produce a not-reachable result.
+
+#### Intelligence sources
+
+1. **OpenPhish Community Feed**  
+   `https://raw.githubusercontent.com/openphish/public_feed/refs/heads/main/feed.txt`
+
+   Supplies phishing URLs. The test extracts each URL's hostname and advertised HTTP or HTTPS port, deduplicates hostname-and-port combinations, and performs a TCP reachability test.
+
+2. **IPSum**  
+   `https://raw.githubusercontent.com/stamparm/ipsum/master/ipsum.txt`
+
+   Supplies suspicious or malicious IP addresses compiled from multiple public lists. The script tests each sampled IP on TCP ports 80 and 443 and records one result per IP.
+
+URLhaus is no longer used. Its former unauthenticated CSV download endpoint returned HTTP 410 Gone, and URLhaus bulk exports now require a different authenticated workflow.
+
+#### What the tool does
+
+- Downloads both current feeds at runtime.
+- Uses the first 25 feed entries per source when `-Quick` is specified.
+- Deduplicates repeated OpenPhish hostname-and-port combinations.
+- Counts each IPSum IP as one indicator even though ports 80 and 443 may both be tested.
+- Supports a configurable TCP timeout through `-TimeoutMs`.
+- Verifies that summary accounting is internally consistent before returning success.
+- Returns exit code `0` after a consistent completed run and exit code `2` if the final accounting does not reconcile.
+
+#### Usage
+
+Run a quick test using up to 25 entries from each feed:
+
+```powershell
+Set-Location '.\generic'
+
+.\Test-Feeds3.ps1 -Quick
+```
+
+Use a longer TCP timeout when the network is slow or heavily filtered:
+
+```powershell
+.\Test-Feeds3.ps1 `
+    -Quick `
+    -TimeoutMs 3000
+```
+
+Check the process exit code immediately after execution:
+
+```powershell
+$LASTEXITCODE
+```
+
+#### Interpreting results
+
+A valid summary satisfies both equations:
+
+```text
+Unique entries tested + duplicates skipped = entries scheduled
+Reachable results + not reachable results = unique entries tested
+```
+
+Important limitations:
+
+- **Not reachable is not proof of filtering.** The destination may be offline, removed, unroutable, or not listening on the tested port.
+- **Reachable is not proof of compromise or exploitability.** It means only that the TCP connection succeeded at test time.
+- **IPSum is not a DNS-filtering test.** IPSum uses literal IP addresses, so DNS filtering and NRPT cannot affect those direct-IP tests.
+- OpenPhish and IPSum are dynamic feeds. Different runs can produce different indicators and results.
+- The script does not browse phishing pages, submit credentials, download payloads, or attempt exploitation.
 
 ---
 ### `Base64Tool.ps1`
@@ -1025,30 +1082,45 @@ foo.com
 ---
 ### `Set-DynamicNrptDomainBlock.ps1`
 
-**Repository path:** `generic/Set-DynamicNrptDomainBlock.ps1`
+**Repository path:** `generic/Set-DynamicNrptDomainBlock.ps1`  
+**Current version:** 2.5.0
 
-Creates and maintains local Windows Name Resolution Policy Table (NRPT) sinkhole rules for validated malicious or high-risk DNS namespaces. The script combines complementary intelligence sources, normalizes them into NRPT-compatible domain rules, applies safety exclusions, and tags every managed rule with `RMMBlockTest` for review and controlled removal.
+Creates and maintains local Windows Name Resolution Policy Table (NRPT) sinkhole rules for validated malicious or high-risk DNS namespaces. The script downloads current intelligence, builds a normalized and deduplicated replacement catalog in memory, applies the local allow-list, and then transactionally replaces only the NRPT rules owned by the tool.
+
+Every managed rule uses:
+
+```text
+Comment tag: RMMBlockTest
+Sinkhole DNS server: 127.0.0.1
+```
+
+Rules created by Group Policy, Intune, VPN software, Windows, or another application are preserved.
 
 #### Intelligence sources
 
 1. **LOLRMM RMM domains**  
    `https://lolrmm.io/api/rmm_domains.csv`
 
-   Provides domains associated with remote monitoring and management products. These products are dual-use and may be legitimate in approved environments, so required services should be placed in the local allow-list.
+   Provides domains associated with remote monitoring and management products. RMM products are dual-use, so approved organizational services should be added to the local allow-list before execution.
 
 2. **Phishing.Database permanent domains**  
    `https://raw.githubusercontent.com/Phishing-Database/phishing/master/additions/permanent/domains.list`
 
-   Provides community-maintained phishing-domain intelligence. As with any community feed, entries may change or occasionally require local review.
+   Provides community-maintained phishing-domain intelligence.
 
-3. <s>**URLhaus malware URLs**  
-   `https://urlhaus.abuse.ch/downloads/csv/`
+3. **OpenPhish Community Feed**  
+   `https://raw.githubusercontent.com/openphish/public_feed/refs/heads/main/feed.txt`
 
-   Downloads the URLhaus ZIP archive, validates and extracts the included data file, keeps records marked `online`, extracts DNS hostnames, removes duplicates, rejects literal IP addresses, and excludes shared hosting platforms that would be unsafe to block as complete DNS namespaces.</s> **Removed from the current script.**
+   Provides complete phishing URLs. Version 2.5.0 extracts and blocks only the exact DNS hostname from each URL. It does not derive or block the shared-hosting apex. For example, a malicious tenant under `pages.dev`, `github.io`, `vercel.app`, `blogspot.com`, or `weebly.com` is handled as an exact tenant hostname rather than blocking the entire platform.
 
-4. **Local operator-maintained known-bad list**
+4. **Helpdesk campaign domains, November 2026**  
+   `https://raw.githubusercontent.com/anuragmalwranalysis/IOC/main/helpdesk%20Domain%20List%20-%20Nov%202026`
 
-   Accepts plain DNS domains or complete URLs. URLs are reduced to their DNS hostname before validation. The initial local entries are:
+   Provides campaign-specific Helpdesk-themed phishing indicators.
+
+5. **Local operator-maintained known-bad list**
+
+   Accepts plain domains or complete URLs. URLs are reduced to their exact DNS hostname before validation.
 
 ```powershell
 $KnownBadEntries = @(
@@ -1057,32 +1129,57 @@ $KnownBadEntries = @(
 )
 ```
 
+#### Transactional refresh model
+
+Version 2.5.0 performs a full current-feed replacement on each successful run:
+
+1. Download every mandatory source with retries.
+2. Parse, normalize, validate, and deduplicate all indicators in memory.
+3. Preserve all contributing source names when the same hostname appears in multiple feeds.
+4. Apply the allow-list to the completed catalog.
+5. Refuse to modify NRPT if the final catalog is empty or unexpectedly small.
+6. Read and preserve NRPT rules owned by other controls.
+7. Remove only rules tagged `RMMBlockTest` after the complete replacement catalog is valid.
+8. Install the current catalog.
+9. If installation fails, remove the partial replacement and restore the previous tool-owned catalog.
+
+This model removes stale tool-owned rules when domains disappear from all current feeds. A hostname remains in the catalog when at least one current source still supplies it.
+
 #### Safety and precision controls
 
-Before modifying NRPT, the script:
+Before changing NRPT, the script:
 
-- Downloads each remote source with retries and validates that content was received.
-- <s>Downloads URLhaus as a binary ZIP archive, verifies the ZIP signature, extracts the archive, and validates the expected CSV schema.</s> **Removed from the current script.**
-- <s>Keeps only URLhaus records currently marked `online`.</s> **Removed from the current script.**
+- Downloads each source with retry logic and validates that usable content was returned.
+- Extracts exact hostnames from URL feeds.
 - Rejects literal IP addresses because NRPT controls DNS resolution and cannot block direct-IP connections.
-- Rejects unsupported embedded wildcard, regular-expression, path, CIDR, port-qualified, and malformed DNS entries.
-- Deduplicates domains while preserving source attribution.
-- <s>Excludes multi-tenant shared hosting platforms from URLhaus-derived whole-domain blocking.</s> **Removed from the current script.**
-- Applies the local allow-list as the final override.
-- Reads existing Windows NRPT rules and skips namespaces that are already present.
-- Removes rules created by this script if a namespace later becomes allow-listed.
-- Creates rules using the sinkhole DNS server `127.0.0.1` and the comment tag `RMMBlockTest`.
+- Rejects embedded wildcard, regular-expression, path, CIDR, port-qualified, and malformed DNS entries that NRPT cannot represent safely.
+- Deduplicates namespaces across all feeds while retaining source attribution.
+- Applies the local allow-list as the final catalog override.
+- Requires at least 100 validated namespaces before beginning replacement.
+- Preserves non-tool NRPT rules.
+- Uses rollback protection if the new catalog cannot be installed completely.
+- Returns a nonzero exit code when the refresh cannot be completed safely.
 
-The local allow-list permits each listed domain and all of its subdomains. Add approved business services here before running the script:
+The local allow-list permits each listed domain and its subdomains. The current defaults protect approved GitHub, Python package, and Google Workspace services:
 
 ```powershell
 $AllowedDomains = @(
     'github.com',
-    'raw.githubusercontent.com'
+    'raw.githubusercontent.com',
+    'pypi.org',
+    'pythonhosted.org',
+    'githubassets.com',
+    'objects.githubusercontent.com',
+    'release-assets.githubusercontent.com',
+    'media.githubusercontent.com',
+    'gist.githubusercontent.com',
+    'docs.google.com',
+    'drive.google.com',
+    'accounts.google.com'
 )
 ```
 
-<s>Shared hosting exclusions are maintained separately from the allow-list. This distinction means that a platform can be excluded from broad URLhaus-derived DNS blocking without being described as universally trusted.</s> **Historical URLhaus behavior; removed from the current script.**
+Review and adapt this allow-list before deployment in another environment.
 
 #### Run the script
 
@@ -1090,10 +1187,11 @@ Run from an elevated PowerShell session:
 
 ```powershell
 Set-Location '.\generic'
+
 .\Set-DynamicNrptDomainBlock.ps1
 ```
 
-Suppress per-domain add and skip messages while retaining stage and summary output:
+Suppress per-domain progress while retaining stage and summary output:
 
 ```powershell
 .\Set-DynamicNrptDomainBlock.ps1 -NoProgress
@@ -1107,31 +1205,45 @@ Get-DnsClientNrptRule |
     Select-Object DisplayName, Namespace, NameServers, Comment
 ```
 
-Verify the two initial local known-bad entries:
-
-```powershell
-Get-DnsClientNrptRule |
-    Where-Object {
-        $_.Comment -eq 'RMMBlockTest' -and
-        $_.Namespace -match 'cladesktop-apps|teams-cloud'
-    } |
-    Format-List DisplayName, Namespace, NameServers, Comment
-```
-
-Remove all NRPT rules created by the script:
+Remove all rules owned by the script:
 
 ```powershell
 .\Set-DynamicNrptDomainBlock.ps1 -Remove
 ```
 
+#### Successful validation example
+
+A validated version 2.5.0 run produced:
+
+```text
+Unique validated namespaces after allow-list: 5275
+Previous tool-owned rules removed: 5275
+Current rules added: 5275
+Skipped because another owner already manages the namespace: 0
+Failed: 0
+```
+
+Feed counts are point-in-time values and will change as upstream intelligence changes.
+
+#### Scheduling
+
+The script is suitable for scheduled execution after interactive validation. A scheduled task should run the script elevated, use `-NoProgress`, start only when networking is available, and preserve the previous catalog when a mandatory feed cannot be validated.
+
+Example command line:
+
+```powershell
+pwsh.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\Tools\PowerShell-Scripts\generic\Set-DynamicNrptDomainBlock.ps1" -NoProgress
+```
+
 #### Limitations
 
-- NRPT blocks DNS namespaces, not complete URLs or individual URL paths.
-- NRPT does not block direct connections to literal IP addresses.
-- Applications that bypass the Windows DNS client or use independent encrypted DNS may not honor these rules.
-- Feed inclusion is threat intelligence, not permanent proof that every listed domain remains malicious.
+- NRPT blocks DNS namespaces, not complete URLs or URL paths.
+- NRPT cannot block direct connections to literal IP addresses.
+- Applications that bypass the Windows DNS client or use independent encrypted DNS may not honor NRPT rules.
+- Feed inclusion is threat intelligence, not permanent proof that every listed hostname remains malicious.
+- Exact-host blocking on shared infrastructure reduces collateral impact but does not validate every upstream classification independently.
+- Rebuilding thousands of NRPT rules creates local rule churn and is not a replacement for enterprise protective DNS or a Secure Web Gateway.
 - This control complements, but does not replace, SmartScreen, EDR, secure web gateways, DNS filtering, firewall controls, email security, patching, or user awareness.
-
 
 ---
 ### `Invoke-CveRiskAssessment.ps1`
