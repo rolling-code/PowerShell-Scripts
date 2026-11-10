@@ -1,13 +1,14 @@
-#requires -Version 5.1
+﻿#requires -Version 5.1
 #requires -RunAsAdministrator
 <#
 .SYNOPSIS
     Creates or removes local Windows NRPT block rules from live RMM, phishing-domain, and malware-host sources.
 
 .DESCRIPTION
-    Downloads and normalizes domains from LOLRMM, Phishing.Database, and the Helpdesk campaign IOC list at runtime. The complete
+    Downloads and normalizes domains from LOLRMM, Phishing.Database, OpenPhish, and the Helpdesk campaign IOC list at runtime. The complete
     namespace catalog is built, validated, deduplicated, and filtered through a local allow-list
-    before Windows NRPT is modified.
+    before Windows NRPT is modified. After every mandatory source is validated, rules previously
+    created by this tool are transactionally replaced so stale feed entries are removed.
 
     Domains in $AllowedDomains, including their subdomains, are never blocked. Existing rules
     previously created by this script are removed automatically when they become allow-listed.
@@ -28,7 +29,7 @@
     .\Set-DynamicNrptDomainBlock.ps1 -Remove
 
 .NOTES
-    Tool version: 2.4.0
+    Tool version: 2.5.0
 #>
 [CmdletBinding()]
 param(
@@ -41,7 +42,7 @@ $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 $ToolName = 'Set-DynamicNrptDomainBlock.ps1'
-$ToolVersion = '2.4.0'
+$ToolVersion = '2.5.0'
 $Tag = 'RMMBlockTest'
 $SinkholeNameServer = '127.0.0.1'
 
@@ -68,8 +69,8 @@ $KnownBadEntries = @(
     'https://teams-cloud.live/'
 )
 
-# Shared platforms are excluded only from URLhaus-derived blocking because
-# a URL-level IOC must not cause an entire multi-tenant platform to be blocked.
+# Shared platforms are recorded for review. URL feeds are reduced only to the exact
+# hostname supplied by the feed; shared hosting apex domains are never derived or blocked.
 $SharedInfrastructureExclusions = @(
     'github.com','raw.githubusercontent.com','gitlab.com','drive.google.com',
     'dropbox.com','vercel.app','pages.dev','workers.dev','netlify.app',
@@ -89,25 +90,23 @@ $Sources = @(
         Uri  = 'https://raw.githubusercontent.com/Phishing-Database/phishing/master/additions/permanent/domains.list'
     },
     [pscustomobject]@{
+        Name = 'OpenPhish Community Feed'
+        Type = 'UrlList'
+        Uri  = 'https://raw.githubusercontent.com/openphish/public_feed/refs/heads/main/feed.txt'
+    },
+    [pscustomobject]@{
         Name = 'Helpdesk campaign domains - November 2026'
         Type = 'DomainList'
         Uri  = 'https://raw.githubusercontent.com/anuragmalwranalysis/IOC/main/helpdesk%20Domain%20List%20-%20Nov%202026'
     }
-<# ,
-
-On Oct 22nd URLhaus shut down all keyless, public URLhaus download feeds !
-
-    [pscustomobject]@{
-        Name = 'URLhaus online malware hosts'
-        Type = 'UrlhausZip'
-        Uri  = 'https://urlhaus.abuse.ch/downloads/csv/'
-    }#>
 )
+
+$MinimumExpectedNamespaces = 100
 
 function Show-ProtectionBanner {
     $banner = @'
 +--------------------------------------------------------------------------+
-|  Combining LOLRMM + Phishing.Database + Helpdesk campaign IOCs          |
+|  Combining LOLRMM + Phishing.Database + OpenPhish + campaign IOCs          |
 |  to provide layered, deduplicated DNS protection!                        |
 +--------------------------------------------------------------------------+
 '@
@@ -304,87 +303,86 @@ function Get-LolrmmEntries {
 function Get-DomainListEntries {
     param([Parameter(Mandatory = $true)][string]$Content)
 
-    Write-Status 'Parsing Phishing.Database list as one domain per non-comment line...' 'Stage'
+    Write-Status 'Parsing domain list as one domain per non-comment line...' 'Stage'
     $entries = @(
         $Content -split "`r?`n" |
             ForEach-Object { $_.Trim() } |
             Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and -not $_.StartsWith('#') -and -not $_.StartsWith(';') }
     )
-    if ($entries.Count -eq 0) { throw 'Phishing.Database source contained no usable lines.' }
-    Write-Status "Phishing.Database domain lines collected: $($entries.Count)." 'Success'
+    if ($entries.Count -eq 0) { throw 'Domain-list source contained no usable lines.' }
+    Write-Status "Domain-list entries collected: $($entries.Count)." 'Success'
     return $entries
 }
 
-function Get-UrlhausEntriesFromZip {
+function Get-UrlListEntries {
     param(
         [Parameter(Mandatory = $true)][string]$SourceName,
-        [Parameter(Mandatory = $true)][string]$Uri,
-        [Parameter(Mandatory = $true)][AllowEmptyCollection()][string[]]$ExcludedDomainList
+        [Parameter(Mandatory = $true)][string]$Content,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][string[]]$SharedDomainList
     )
 
-    $workRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("NrptUrlhaus-{0}" -f [guid]::NewGuid().ToString('N'))
-    $zipPath = Join-Path $workRoot 'URLhaus.zip'
-    $extractPath = Join-Path $workRoot 'Extracted'
-    New-Item -ItemType Directory -Path $extractPath -Force | Out-Null
+    Write-Status "Parsing $SourceName as one URL per non-comment line..." 'Stage'
+    $domains = New-Object 'System.Collections.Generic.List[string]'
+    $invalid = 0
+    $literalIps = 0
+    $duplicates = 0
+    $sharedTenantHosts = 0
 
-    try {
-        Write-Status "Downloading source: $SourceName" 'Stage'
-        Write-Status "Source URL: $Uri" 'Info'
-        $downloaded = $false
-        for ($attempt=1; $attempt -le 3; $attempt++) {
-            try {
-                Write-Status "Binary download attempt $attempt of 3..." 'Info'
-                Invoke-WebRequest -Uri $Uri -Method Get -UseBasicParsing -TimeoutSec 120 -Headers @{'User-Agent'="$ToolName/$ToolVersion"} -OutFile $zipPath -ErrorAction Stop
-                if (-not (Test-Path -LiteralPath $zipPath) -or (Get-Item -LiteralPath $zipPath).Length -lt 4) { throw 'The downloaded archive is empty or missing.' }
-                $signature = [System.IO.File]::ReadAllBytes($zipPath)[0..3]
-                if ($signature[0] -ne 0x50 -or $signature[1] -ne 0x4B) { throw 'The URLhaus response is not a ZIP archive (PK signature missing).' }
-                $downloaded=$true
-                Write-Status "Binary download complete: $((Get-Item -LiteralPath $zipPath).Length) bytes." 'Success'
+    $lines = @(
+        $Content -split "`r?`n" |
+            ForEach-Object { $_.Trim() } |
+            Where-Object {
+                -not [string]::IsNullOrWhiteSpace($_) -and
+                -not $_.StartsWith('#') -and
+                -not $_.StartsWith(';')
+            }
+    )
+
+    if ($lines.Count -eq 0) {
+        throw "$SourceName contained no usable URL lines."
+    }
+
+    foreach ($line in $lines) {
+        $parsedUri = $null
+        if (-not [System.Uri]::TryCreate($line, [System.UriKind]::Absolute, [ref]$parsedUri)) {
+            $invalid++
+            continue
+        }
+        if ($parsedUri.Scheme -notin @('http', 'https')) {
+            $invalid++
+            continue
+        }
+
+        $hostName = $parsedUri.DnsSafeHost.Trim().TrimEnd('.').ToLowerInvariant()
+        if ([string]::IsNullOrWhiteSpace($hostName)) {
+            $invalid++
+            continue
+        }
+        if (Test-IsIpAddress -Value $hostName) {
+            $literalIps++
+            continue
+        }
+
+        foreach ($sharedDomain in $SharedDomainList) {
+            if ($hostName.EndsWith(".$sharedDomain")) {
+                $sharedTenantHosts++
                 break
-            } catch {
-                Write-Status "Binary download attempt $attempt failed: $($_.Exception.Message)" 'Warning'
-                if ($attempt -lt 3) { Start-Sleep -Seconds (2*$attempt) }
             }
         }
-        if (-not $downloaded) { throw "Unable to download required source '$SourceName' after 3 attempts: $Uri" }
 
-        Write-Status 'Expanding the URLhaus ZIP archive...' 'Stage'
-        Expand-Archive -LiteralPath $zipPath -DestinationPath $extractPath -Force
-        $dataFile = Get-ChildItem -LiteralPath $extractPath -File -Recurse | Where-Object { $_.Extension -in '.txt','.csv' } | Select-Object -First 1
-        if ($null -eq $dataFile) { throw 'The URLhaus ZIP archive contained no .txt or .csv data file.' }
-        Write-Status "URLhaus data file: $($dataFile.Name)" 'Success'
-
-        $lines = @(Get-Content -LiteralPath $dataFile.FullName | Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and -not $_.StartsWith('#') })
-        if ($lines.Count -eq 0) { throw 'URLhaus data file contained no data rows.' }
-        $header=@('id','dateadded','url','url_status','last_online','threat','tags','urlhaus_link','reporter')
-        $rows=@($lines | ConvertFrom-Csv -Header $header)
-        if ($rows.Count -eq 0) { throw 'URLhaus data contained no parseable records.' }
-
-        $firstStatus=[string]($rows[0].url_status);$firstUrl=[string]($rows[0].url)
-        if ([string]::IsNullOrWhiteSpace($firstStatus) -or [string]::IsNullOrWhiteSpace($firstUrl)) { throw 'URLhaus schema validation failed after extraction.' }
-        Write-Status "URLhaus schema confirmed after ZIP extraction: first status='$firstStatus'." 'Success'
-
-        $domains=New-Object 'System.Collections.Generic.List[string]'
-        $online=0;$offline=0;$ips=0;$shared=0;$invalid=0;$duplicates=0
-        foreach($row in $rows) {
-            if ([string]($row.url_status) -ne 'online') {$offline++;continue}
-            $online++
-            $parsedUri=$null
-            if (-not [System.Uri]::TryCreate([string]($row.url),[System.UriKind]::Absolute,[ref]$parsedUri)) {$invalid++;continue}
-            $hostName=$parsedUri.DnsSafeHost.Trim().TrimEnd('.').ToLowerInvariant()
-            if ([string]::IsNullOrWhiteSpace($hostName)) {$invalid++;continue}
-            if (Test-IsIpAddress -Value $hostName) {$ips++;continue}
-            if (Test-IsAllowedNamespace -Namespace $hostName -AllowedDomainList $ExcludedDomainList) {$shared++;continue}
-            if ($domains.Contains($hostName)) {$duplicates++;continue}
-            $domains.Add($hostName)|Out-Null
+        if ($domains.Contains($hostName)) {
+            $duplicates++
+            continue
         }
-        if ($domains.Count -eq 0) { throw "URLhaus produced no usable online DNS hosts. rows=$($rows.Count); online=$online; offline=$offline; IPs=$ips; shared=$shared; invalid=$invalid." }
-        Write-Status "URLhaus rows=$($rows.Count); online=$online; offline=$offline; DNS hosts=$($domains.Count); literal IPs skipped=$ips; shared skipped=$shared; invalid=$invalid; duplicates=$duplicates." 'Success'
-        return $domains.ToArray()
+        $domains.Add($hostName) | Out-Null
     }
-    finally {
-        if (Test-Path -LiteralPath $workRoot) { Remove-Item -LiteralPath $workRoot -Recurse -Force -ErrorAction SilentlyContinue }
+
+    if ($domains.Count -eq 0) {
+        throw "$SourceName produced no usable exact DNS hostnames."
     }
+
+    Write-Status "$SourceName URL lines=$($lines.Count); exact hosts=$($domains.Count); shared-platform tenant hosts=$sharedTenantHosts; literal IPs skipped=$literalIps; invalid=$invalid; duplicates=$duplicates." 'Success'
+    return $domains.ToArray()
 }
 
 function Add-SourceEntriesToCatalog {
@@ -438,7 +436,7 @@ Show-ProtectionBanner
 Write-Status "$ToolName v$ToolVersion" 'Info'
 Write-Status "NRPT rule tag: $Tag" 'Info'
 Write-Status "Sinkhole DNS server: $SinkholeNameServer" 'Info'
-Write-Status 'LOLRMM, Phishing.Database, and the Helpdesk campaign IOC list are downloaded live and merged with the local known-bad list.' 'Info'
+Write-Status 'LOLRMM, Phishing.Database, OpenPhish, and the Helpdesk campaign IOC list are downloaded live and merged with the local known-bad list.' 'Info'
 Write-Status "Local allow-list entries: $($AllowedDomains.Count)" 'Info'
 Write-Status "Local known-bad entries: $($KnownBadEntries.Count)" 'Info'
 Write-Status "Shared infrastructure exclusions: $($SharedInfrastructureExclusions.Count)" 'Info'
@@ -507,15 +505,26 @@ Add-SourceEntriesToCatalog -Catalog $catalog -Rejected $rejectedEntries -SourceN
 
 foreach ($source in $Sources) {
     Write-Host ''
-    if ($source.Type -eq 'UrlhausZip') {
-        $entries=@(Get-UrlhausEntriesFromZip -SourceName $source.Name -Uri $source.Uri -ExcludedDomainList $normalizedSharedInfrastructure.ToArray())
+    $content = Invoke-TextDownload -SourceName $source.Name -Uri $source.Uri
+
+    if ($source.Type -eq 'LolrmmCsv') {
+        $entries = @(Get-LolrmmEntries -Content $content)
+    }
+    elseif ($source.Type -eq 'DomainList') {
+        $entries = @(Get-DomainListEntries -Content $content)
+    }
+    elseif ($source.Type -eq 'UrlList') {
+        $entries = @(
+            Get-UrlListEntries `
+                -SourceName $source.Name `
+                -Content $content `
+                -SharedDomainList $normalizedSharedInfrastructure.ToArray()
+        )
     }
     else {
-        $content=Invoke-TextDownload -SourceName $source.Name -Uri $source.Uri
-        if ($source.Type -eq 'LolrmmCsv') {$entries=@(Get-LolrmmEntries -Content $content)}
-        elseif ($source.Type -eq 'DomainList') {$entries=@(Get-DomainListEntries -Content $content)}
-        else {throw "Unsupported source type: $($source.Type)"}
+        throw "Unsupported source type: $($source.Type)"
     }
+
     Add-SourceEntriesToCatalog -Catalog $catalog -Rejected $rejectedEntries -SourceName $source.Name -Entries $entries
 }
 
@@ -534,7 +543,10 @@ Write-Status "Namespaces excluded by local allow-list: $($allowListedCatalogKeys
 
 Write-Status 'Validating the completed in-memory namespace catalog...' 'Stage'
 $namespaces = @($catalog.Values | ForEach-Object { $_.Namespace } | Sort-Object -Unique)
-if ($namespaces.Count -eq 0) { throw 'No valid NRPT namespaces were produced. No rules were changed.' }
+if ($namespaces.Count -eq 0) { throw 'No valid NRPT namespaces were produced. Existing rules remain unchanged.' }
+if ($namespaces.Count -lt $MinimumExpectedNamespaces) {
+    throw "Catalog validation failed: only $($namespaces.Count) namespaces were produced; minimum expected is $MinimumExpectedNamespaces. Existing rules remain unchanged."
+}
 
 $finalFailures = @(
     $namespaces | Where-Object {
@@ -560,75 +572,76 @@ if ($rejectedEntries.Count -gt 0) {
 Write-Host ''
 Write-Status 'Reading existing Windows NRPT rules...' 'Stage'
 $existingRules = @(Get-DnsClientNrptRule -ErrorAction Stop)
-$existingNamespaces = @{}
-foreach ($rule in $existingRules) {
+$ownedRules = @($existingRules | Where-Object { $_.Comment -eq $Tag })
+$externalRules = @($existingRules | Where-Object { $_.Comment -ne $Tag })
+
+$externalNamespaces = @{}
+foreach ($rule in $externalRules) {
     foreach ($namespace in @($rule.Namespace)) {
         if (-not [string]::IsNullOrWhiteSpace([string]$namespace)) {
-            $namespaceKey = ([string]$namespace).ToLowerInvariant()
-            $existingNamespaces[$namespaceKey] = [string]$rule.Name
+            $externalNamespaces[([string]$namespace).ToLowerInvariant()] = [string]$rule.Name
         }
     }
 }
-Write-Status "Existing NRPT rules read: $($existingRules.Count); indexed namespaces: $($existingNamespaces.Count)." 'Success'
 
-# Remove old rules created by this script if they are now allow-listed.
-Write-Status 'Reconciling existing script-created rules against the local allow-list...' 'Stage'
-$allowListedRulesRemoved = 0
-$allowListedRuleRemovalFailures = 0
-foreach ($rule in $existingRules) {
-    if ($rule.Comment -ne $Tag) { continue }
+$previousOwnedNamespaces = @(
+    $ownedRules |
+        ForEach-Object { @($_.Namespace) } |
+        ForEach-Object { [string]$_ } |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+        Sort-Object -Unique
+)
 
-    $allowedMatches = @(
-        @($rule.Namespace) | Where-Object {
-            Test-IsAllowedNamespace -Namespace ([string]$_) -AllowedDomainList $normalizedAllowedDomains.ToArray()
-        }
-    )
-    if ($allowedMatches.Count -eq 0) { continue }
+Write-Status "Existing NRPT rules read: total=$($existingRules.Count); tool-owned=$($ownedRules.Count); external=$($externalRules.Count)." 'Success'
+Write-Status 'All feeds and the replacement catalog are valid. Starting transactional NRPT refresh...' 'Stage'
 
+$removedOwnedCount = 0
+$removalFailures = 0
+foreach ($rule in $ownedRules) {
     try {
         Remove-DnsClientNrptRule -Name $rule.Name -Force -ErrorAction Stop
-        $allowListedRulesRemoved++
-        foreach ($removedNamespace in @($rule.Namespace)) {
-            $removedKey = ([string]$removedNamespace).ToLowerInvariant()
-            if ($existingNamespaces.ContainsKey($removedKey)) {
-                $existingNamespaces.Remove($removedKey)
-            }
+        $removedOwnedCount++
+        if (-not $NoProgress) {
+            Write-Status "Removed previous tool-owned rule: $($rule.Namespace -join ', ')" 'Success'
         }
-        Write-Status "Removed previously blocked allow-listed rule: $($rule.Namespace -join ', ')" 'Success'
     }
     catch {
-        $allowListedRuleRemovalFailures++
-        Write-Status "Failed to remove allow-listed rule $($rule.Name): $($_.Exception.Message)" 'Error'
+        $removalFailures++
+        Write-Status "Failed to remove previous tool-owned rule $($rule.Name): $($_.Exception.Message)" 'Error'
     }
 }
-Write-Status "Previously blocked allow-listed rules removed: $allowListedRulesRemoved; failures: $allowListedRuleRemovalFailures." $(if ($allowListedRuleRemovalFailures -eq 0) { 'Success' } else { 'Warning' })
 
-Write-Host ''
-Write-Status "Applying $($namespaces.Count) validated namespaces to Windows NRPT..." 'Stage'
+if ($removalFailures -gt 0) {
+    Write-Status 'Transactional refresh stopped because one or more previous rules could not be removed.' 'Error'
+    Write-Status 'No new rules were installed. Existing rules that could not be removed remain in place.' 'Warning'
+    exit 1
+}
+
 $addedCount = 0
-$skippedCount = 0
+$externalConflictCount = 0
 $failedCount = 0
-
+Write-Status "Installing $($namespaces.Count) current validated namespaces..." 'Stage'
 foreach ($namespace in $namespaces) {
     $key = $namespace.ToLowerInvariant()
-    if ($existingNamespaces.ContainsKey($key)) {
-        $skippedCount++
-        if (-not $NoProgress) { Write-Status "Skipping existing namespace: $namespace" 'Warning' }
+    if ($externalNamespaces.ContainsKey($key)) {
+        $externalConflictCount++
+        if (-not $NoProgress) {
+            Write-Status "Skipping namespace managed by another NRPT owner: $namespace" 'Warning'
+        }
         continue
     }
 
     try {
-        Add-DnsClientNrptRule `
+        $sourceText = @($catalog[$key].Sources.ToArray()) -join '; '
+        $newRule = Add-DnsClientNrptRule `
             -Namespace $namespace `
             -NameServers $SinkholeNameServer `
             -Comment $Tag `
             -DisplayName "Domain block: $namespace" `
-            -ErrorAction Stop | Out-Null
+            -ErrorAction Stop
 
-        $existingNamespaces[$key] = $true
         $addedCount++
         if (-not $NoProgress) {
-            $sourceText = @($catalog[$key].Sources.ToArray()) -join '; '
             Write-Status "Added NRPT block rule: $namespace [source: $sourceText]" 'Success'
         }
     }
@@ -638,19 +651,59 @@ foreach ($namespace in $namespaces) {
     }
 }
 
+$rollbackRestored = 0
+$rollbackFailed = 0
+
+if ($failedCount -gt 0) {
+    Write-Status "Installation failed for $failedCount namespace(s). Rolling back to the previous tool-owned catalog..." 'Error'
+
+    $partialRules = @(Get-DnsClientNrptRule -ErrorAction SilentlyContinue | Where-Object { $_.Comment -eq $Tag })
+    foreach ($rule in $partialRules) {
+        try {
+            Remove-DnsClientNrptRule -Name $rule.Name -Force -ErrorAction Stop
+        }
+        catch {
+            Write-Status "Rollback cleanup failed for rule $($rule.Name): $($_.Exception.Message)" 'Error'
+        }
+    }
+
+    foreach ($namespace in $previousOwnedNamespaces) {
+        $key = $namespace.ToLowerInvariant()
+        if ($externalNamespaces.ContainsKey($key)) {
+            continue
+        }
+        try {
+            Add-DnsClientNrptRule `
+                -Namespace $namespace `
+                -NameServers $SinkholeNameServer `
+                -Comment $Tag `
+                -DisplayName "Domain block: $namespace" `
+                -ErrorAction Stop | Out-Null
+            $rollbackRestored++
+        }
+        catch {
+            $rollbackFailed++
+            Write-Status "Rollback failed to restore ${namespace}: $($_.Exception.Message)" 'Error'
+        }
+    }
+
+    Write-Status "Rollback complete: restored=$rollbackRestored; failed=$rollbackFailed." $(if ($rollbackFailed -eq 0) { 'Success' } else { 'Error' })
+    exit 1
+}
+
 Write-Host ''
-Write-Status 'Completed NRPT processing.' 'Stage'
+Write-Status 'Completed transactional NRPT refresh.' 'Stage'
 Write-Status "Unique validated namespaces after allow-list: $($namespaces.Count)" 'Info'
-Write-Status "Added: $addedCount" 'Success'
-Write-Status "Skipped because already present: $skippedCount" 'Warning'
-Write-Status "Failed: $failedCount" $(if ($failedCount -eq 0) { 'Success' } else { 'Error' })
+Write-Status "Previous tool-owned rules removed: $removedOwnedCount" 'Success'
+Write-Status "Current rules added: $addedCount" 'Success'
+Write-Status "Skipped because another owner already manages the namespace: $externalConflictCount" $(if ($externalConflictCount -eq 0) { 'Success' } else { 'Warning' })
+Write-Status "Failed: $failedCount" 'Success'
 Write-Status "Rejected during source normalization: $($rejectedEntries.Count)" 'Info'
 Write-Status "Excluded by local allow-list: $($allowListedCatalogKeys.Count)" 'Success'
-Write-Status "Previously blocked allow-listed rules removed: $allowListedRulesRemoved" 'Success'
+Write-Status 'Stale tool-owned domains absent from current feeds were removed by the full refresh.' 'Success'
 Write-Host ''
 Write-Status "Review rules with: Get-DnsClientNrptRule | Where-Object Comment -eq '$Tag'" 'Info'
 Write-Status "Remove rules with: .\Set-DynamicNrptDomainBlock.ps1 -Remove" 'Info'
+Write-Status "Run quietly for scheduled execution with: .\Set-DynamicNrptDomainBlock.ps1 -NoProgress" 'Info'
 Write-Status "Test GitHub with: Resolve-DnsName 'github.com'" 'Info'
-
-if ($failedCount -gt 0 -or $allowListedRuleRemovalFailures -gt 0) { exit 1 }
 exit 0
