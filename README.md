@@ -9,6 +9,8 @@ Entries with documentation in this README jump to the corresponding section belo
   - 📂 **[generic/](#section-generic-directory)**
     - [Base64Tool.ps1](#base64toolps1)
     - [Test-Feeds3.ps1](#test-feeds3ps1)
+    - [Check-ArtexSetup-v1.1.0.ps1](#check-artexsetup-v110ps1)
+    - [Start-ArtexWebAssessment-v1.1.0.ps1](#start-artexwebassessment-v110ps1)
     - [domains2ipsipv4Only.ps1](#domains2ipsipv4onlyps1)
     - [DisableWindowsDefender.ps1](#disablewindowsdefenderps1)
     - [kickoff.ps1](#kickoffps1)
@@ -932,6 +934,54 @@ Run from the repository root:
 ```
 
 ---
+### `Check-ArtexSetup-v1.1.0.ps1`
+
+**Repository path:** `generic/Check-ArtexSetup-v1.1.0.ps1`  
+**Current version:** 1.1.0  
+Checks whether Docker Desktop and Ollama are installed and ready for a local ARTEX deployment. The script reports Git, Docker, Docker Compose, Ollama, LLM model, repository, branch, commit, container, and listener details. If ARTEX is not already present at the configured repository path, the script explains the expected location and asks before cloning it. Existing installations and running containers are handled without creating a duplicate clone.
+
+Run the setup and open the local ARTEX interface:
+
+```powershell
+Set-Location '.\generic'
+.\Check-ArtexSetup-v1.1.0.ps1 -OpenBrowser
+```
+
+Use a different repository location or installed Ollama model when required:
+
+```powershell
+.\Check-ArtexSetup-v1.1.0.ps1 `
+    -RepositoryPath 'C:\Tools\ARTEX' `
+    -OllamaModel 'your-installed-model'
+```
+
+Docker Desktop and Ollama must already be installed and operational. When either prerequisite is unavailable, the script reports why the environment is not ready and provides the applicable installation resource rather than attempting automated debugging.
+
+### `Start-ArtexWebAssessment-v1.1.0.ps1`
+
+**Repository path:** `generic/Start-ArtexWebAssessment-v1.1.0.ps1`  
+**Current version:** 1.1.0  
+Creates a generic first-run ARTEX web-assessment package for an operator-supplied HTTPS origin. The script validates the local ARTEX, Docker, Git, and Ollama environment; checks target DNS and HTTPS reachability; writes a timestamped campaign prompt and metadata file; copies the prompt to the clipboard; and displays Microsoft Edge extension setup steps. Campaign files are saved under `C:\Tools\ARTEX-Campaigns` by default.
+
+Create a first-run campaign for an authorized non-production web application:
+
+```powershell
+Set-Location '.\generic'
+.\Start-ArtexWebAssessment-v1.1.0.ps1 `
+    -Domain 'https://app.example.test'
+```
+
+Use the baseline profile or a different campaign-data directory:
+
+```powershell
+.\Start-ArtexWebAssessment-v1.1.0.ps1 `
+    -Domain 'https://app.example.test' `
+    -Profile Baseline `
+    -CampaignRoot 'C:\SecurityTesting\ARTEX-Campaigns'
+```
+
+Supply only the HTTPS origin, without credentials, query parameters, fragments, or an application path. Authentication, when required, is established through the normal browser workflow.
+
 ### `Test-Feeds3.ps1`
 
 **Repository path:** `generic/Test-Feeds3.ps1`  
