@@ -20,6 +20,8 @@ Entries with documentation in this README jump to the corresponding section belo
     - [generic/Set-DynamicNrptDomainBlock.ps1](#set-dynamicnrptdomainblockps1)
     - [WP-CVE-Validator.ps1](#wp-cve-validatorps1)
     - [SSH-CVE-Validator.ps1](#ssh-cve-validatorps1)
+    - [NGINX-CVE-Validator-v2.1.0.ps1](#nginx-cve-validator-v210ps1)
+    - [AssetAttributionEngine-v2.1.0.psm1](#assetattributionengine-v210psm1)
     - [Test-GitHubRepositorySecurity.ps1](#test-githubrepositorysecurityps1)
     - [Invoke-PythonRepositorySecurityScan.ps1](#invoke-pythonrepositorysecurityscanps1)
   - 📂 **[Azure Active Directory/](#section-azure-active-directory)**
@@ -1740,3 +1742,146 @@ The hostname output preserves source names and IONIX identifiers. The endpoint o
 - Unreachable is point-in-time evidence and does not prove permanent absence.
 - Hosting attribution helps identify likely remediation ownership, while account-level users, keys, shell access, and provider escalation may remain with the customer.
 - The tool does not replace authenticated configuration review, package inventory, server logs, provider confirmation, or controlled nonproduction exploitation.
+
+#### NGINX-CVE-Validator-v2.1.0.ps1
+
+**Repository path:** `generic/NGINX-CVE-Validator-v2.1.0.ps1`  
+**Required module:** `generic/AssetAttributionEngine-v2.1.0.psm1`  
+**Current version:** 2.1.0
+
+`NGINX-CVE-Validator-v2.1.0.ps1` is an evidence-first, read-only PowerShell tool for assessing public NGINX and OpenResty exposure against a curated four-CVE catalog. It accepts a generic asset CSV or plain-text target list, normalizes and deduplicates inputs, consolidates equivalent aliases into endpoint stacks, and keeps affected-version evidence separate from confirmed exploitability.
+
+The tool is designed for external-attack-surface inventories where many DNS names may represent the same infrastructure. It performs active protocol and CVE assessment once per equivalent endpoint stack while preserving per-asset evidence and alias relationships in CSV and JSON.
+
+##### What the tool does
+
+- Imports hostnames, IP addresses, and URLs from a generic CSV or text file.
+- Detects likely target columns without requiring a vendor-specific CSV schema.
+- Resolves IPv4 and IPv6 addresses with `Resolve-DnsName` and a `System.Net.Dns` fallback.
+- Groups equivalent aliases by resolved address, scheme, port, initial-hop web-server product and version, and Cloudflare traversal state.
+- Inspects only the initial HTTP response. Cross-host redirects are recorded but are not followed for technology, ownership, Cloudflare, or CVE attribution.
+- Detects publicly observable NGINX and OpenResty product and version evidence from initial-response headers and response bodies.
+- Recognizes Apache, LiteSpeed, OpenLiteSpeed, Microsoft IIS, Caddy, Pantheon, and cPanel so that NGINX-specific checks can be classified as not applicable.
+- Evaluates HTTP/1.1, HTTP/2, and HTTP/3 or QUIC evidence without sending exploit traffic.
+- Evaluates Cloudflare response-path indicators separately from DNS, ownership, and patch responsibility.
+- Uses `AssetAttributionEngine-v2.1.0.psm1` for provider, managed-platform, DNS, reverse-DNS, and Azure response-signal attribution.
+- Evaluates Azure managed-platform indicators such as `ARRAffinity`, `ARRAffinitySameSite`, `azurewebsites.net`, `X-ARR-Log-Id`, `X-Site-Deployment-Id`, and `X-Ms-Routing-Name` without treating a generic Azure IP-range match as proof of customer ownership.
+- Downloads or reuses the current CISA Known Exploited Vulnerabilities catalog and FIRST EPSS daily feed.
+- Exports detailed per-asset CVE evidence, endpoint-level summaries, and a coverage ledger to CSV and JSON.
+
+##### Vulnerability coverage
+
+Version 2.1.0 evaluates four NGINX CVEs:
+
+- **CVE-2026-123007:** Correlates affected NGINX versions with public HTTP/2 evidence. The tool does not send malformed HTTP/2 traffic or attempt to reproduce memory corruption or denial of service.
+- **CVE-2026-123633:** Correlates affected versions with HTTP/2 evidence while preserving the need to validate upstream-proxy and connection-resource prerequisites.
+- **CVE-2026-121810:** Correlates affected versions with public HTTP/3 or QUIC evidence. A version match without HTTP/3 evidence remains a prerequisite-validation lead.
+- **CVE-2026-123634:** Correlates affected versions while preserving the need for on-host validation of variable-based proxy resolution, resolver behavior, mirror subrequests, or SSI subrequests.
+
+The configured common upstream fixed releases are NGINX stable `1.30.7` or later and NGINX mainline `1.31.9` or later. Linux distributions and product vendors may backport fixes while retaining an older-looking upstream version, so the installed package revision and vendor advisory remain authoritative for final patch validation.
+
+##### Evidence and triage model
+
+- **Priority 1 Validation:** NGINX affected-version evidence is exposed, Cloudflare traversal is not confirmed, and provider-managed responsibility is not established.
+- **Priority 2 Validation:** The NGINX version is hidden, but established organization ownership or relevant HTTP/2 or HTTP/3 evidence warrants direct validation.
+- **Discovery Lead:** NGINX is detected, but its version, ownership, and affected-version applicability are not established. Discovery leads remain in evidence exports but are excluded from the direct patch queue.
+- **Ownership Review:** An external IP-only target redirects outside the input scope while management remains unknown. Ownership-review entries are excluded from the direct internal patch queue.
+- **Provider managed or managed-likely:** Managed hosting or strong platform evidence is present. Detailed CVE evidence remains available, but internal patch responsibility is not assumed.
+- **Not Applicable - Different Web Server Observed:** The assessed initial response disclosed another web-server product and did not indicate NGINX or OpenResty.
+- **Inconclusive:** Reachability, product, version, configuration, protocol, or ownership evidence was insufficient.
+
+Priority classifications are validation queues, not vulnerability-severity declarations. Affected-version evidence does not prove exploitability, and a negative or not-detected result does not prove permanent absence.
+
+##### Cloudflare interpretation
+
+The validator checks initial-response indicators including `Server: cloudflare`, `CF-Ray`, `CF-Cache-Status`, `CF-Mitigated`, `__cf_bm`, `cf_clearance`, and `__cflb`.
+
+When none is observed, the result is **Cloudflare traversal not confirmed on the tested initial response**. This does not prove that Cloudflare DNS, another Cloudflare service, WAF policy, origin concealment, or direct-to-origin prevention is absent.
+
+##### Safety boundaries
+
+The validator does **not** authenticate, submit credentials, brute-force accounts, upload files, execute commands, send malformed HTTP/2 or HTTP/3 traffic, reproduce memory corruption, trigger request smuggling, test direct-to-origin access, modify DNS, patch NGINX, restart services, or change infrastructure. It performs unauthenticated initial-hop HTTP requests, protocol negotiation, DNS and provider attribution, and version or prerequisite correlation only.
+
+##### Prerequisites
+
+- Windows PowerShell 5.1 or PowerShell 7.
+- `curl.exe` with HTTP/2 support for protocol validation.
+- `AssetAttributionEngine-v2.1.0.psm1` in the same directory as the validator.
+- Network access to the target endpoints and the public threat-intelligence or attribution sources used by the script.
+
+Review the complete comment-based help before execution:
+
+```powershell
+Get-Help .\NGINX-CVE-Validator-v2.1.0.ps1 -Full
+```
+
+##### Usage
+
+Run from the generic directory against a CSV export:
+
+```powershell
+Set-Location '.\generic'
+
+.\NGINX-CVE-Validator-v2.1.0.ps1 `
+    -InputPath '.\external-assets.csv' `
+    -IncludeHttpFallback
+```
+
+Supply an explicit HTTP/2-capable curl executable when required:
+
+```powershell
+.\NGINX-CVE-Validator-v2.1.0.ps1 `
+    -InputPath '.\external-assets.csv' `
+    -CurlPath 'C:\Tools\curl\curl.exe' `
+    -IncludeHttpFallback
+```
+
+Print complete alias inventories and detailed provider-managed CVE output for troubleshooting:
+
+```powershell
+.\NGINX-CVE-Validator-v2.1.0.ps1 `
+    -InputPath '.\external-assets.csv' `
+    -IncludeHttpFallback `
+    -ShowAliases `
+    -ShowProviderCveDetails
+```
+
+Force fresh provider-attribution datasets when required:
+
+```powershell
+.\NGINX-CVE-Validator-v2.1.0.ps1 `
+    -InputPath '.\external-assets.csv' `
+    -ForceAttributionRefresh
+```
+
+##### Output
+
+Each run produces:
+
+- `NGINX-CVE-Validator-Results-YYYYMMDD-HHMMSS.csv` and matching JSON with one row per input asset and CVE.
+- `NGINX-CVE-Validator-Endpoints-YYYYMMDD-HHMMSS.csv` and matching JSON with one row per consolidated endpoint stack.
+- `NGINX-CVE-Validator-Coverage-v2.1.0.csv` describing the configured CVE coverage and validation limitations.
+- Console summaries separating Priority 1, Priority 2, discovery-lead, ownership-review, provider-managed, and unreachable endpoint stacks.
+
+Key structured fields include endpoint and alias identifiers, DNS resolution evidence, NGINX product and version evidence, negotiated protocol evidence, Cloudflare indicators, hosting and management attribution, Azure platform signals, redirect evidence, CISA KEV and FIRST EPSS context, and explicit `DiscoveryLead`, `OwnershipReviewRequired`, and `DirectInternalPatchQueueEligible` values.
+
+##### Interpretation and limitations
+
+- A public NGINX banner confirms only the advertised product and version string. It does not prove the effective installed package or vendor backport status.
+- Multiple hostnames may represent one endpoint stack; aliases should not automatically become separate remediation targets.
+- Successful HTTP/2 or HTTP/3 negotiation establishes public protocol support, not the complete vulnerable configuration or exploit path.
+- Generic Azure service-tag attribution establishes Microsoft network space, not tenant ownership, resource type, management responsibility, or patch responsibility.
+- Strong Azure managed-platform indicators support a managed-likely disposition but do not distinguish a built-in platform component from a custom container or customer-managed backend.
+- Managed-hosting attribution helps identify likely remediation ownership but does not prove that the provider has deployed a fixed package.
+- Unreachable is point-in-time evidence and does not prove that a service is permanently unavailable.
+- The validator does not replace authenticated package inventory, operating-system advisories, configuration review, server logs, provider confirmation, container-image inspection, or controlled nonproduction reproduction.
+
+#### AssetAttributionEngine-v2.1.0.psm1
+
+**Repository path:** `generic/AssetAttributionEngine-v2.1.0.psm1`  
+**Current version:** 2.1.0
+
+Required companion module for `NGINX-CVE-Validator-v2.1.0.ps1`. The module performs read-only, evidence-based provider and management attribution using input metadata, DNS and CNAME chains, authoritative nameservers, reverse DNS, official cloud-provider IP ranges, HTTP response headers, redirect destinations, response-body fingerprints, and Azure managed-platform signals.
+
+The module distinguishes generic cloud-network attribution from managed-platform evidence. A Microsoft Azure service-tag match identifies Azure network space only and does not automatically establish organizational ownership or customer patch responsibility. Managed-hosting and managed-likely classifications remain evidence leads for ownership validation rather than proof of security or patch status.
+
