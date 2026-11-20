@@ -1481,102 +1481,165 @@ Get-Help .\Invoke-PythonRepositorySecurityScan.ps1 -Full
 - The orchestrator does not replace manual code review, deployment validation, runtime testing, or verification of compensating controls.
 
 ### `WP-CVE-Validator.ps1`
-
+  
 **Repository path:** `generic/WP-CVE-Validator.ps1`  
-**Current version:** 3.7.2
+**Current version:** 4.0.0
 
-WP-CVE-Validator.ps1 is an evidence-first, read-only PowerShell tool for assessing public WordPress and PHP deployments against a curated vulnerability catalog. Version 3.7.2 combines safe behavioral and prerequisite validation with NVD CVSS severity, the CISA Known Exploited Vulnerabilities catalog, and FIRST EPSS exploitation-probability data.
+`WP-CVE-Validator.ps1` is an evidence-first, read-only PowerShell tool for assessing public WordPress and PHP deployments against a curated vulnerability catalog. Version 4.0.0 preserves the existing WordPress Core, plugin, safe behavioral, Cloudflare, managed-hosting, threat-intelligence, and evidence-export functionality while refactoring PHP assessment into a data-driven vulnerability catalog.
 
-The tool keeps asset applicability separate from threat intelligence. CVSS, KEV, and EPSS enrich the exported evidence, but the console displays the detailed threat banner only when vulnerable behavior is confirmed. Affected-version evidence, exposed prerequisites, and observed behavior are reported without being mislabeled as reproduced exploitation.
+The PHP catalog records each vulnerability's affected branches, first fixed release, applicable runtime component, exploit prerequisites, authoritative validation requirements, temporary mitigation, and security-release group. The generic PHP evaluator consumes that metadata, allowing future PHP CVEs to be added primarily as catalog entries rather than duplicated procedural code.
 
-##### What the tool does
+The tool keeps asset applicability separate from threat intelligence. NVD CVSS, CISA KEV, and FIRST EPSS enrich the exported evidence, but affected-version evidence is not treated as reproduced exploitation. Public version strings are leads; package revisions, vendor advisories, hosting-provider evidence, container images, and effective worker versions remain authoritative for final patch validation.
 
-- Detects publicly observable WordPress installations and core versions.
+###### What the tool does
+- Detects publicly observable WordPress installations and Core versions.
 - Inventories exposed plugins and themes and records the evidence source for each component.
-- Correlates reliable component versions with affected CVE ranges.
-- Performs safe, read-only behavioral, differential, and prerequisite checks.
-- Downloads or reuses the current CISA KEV catalog and FIRST EPSS feed.
-- Retrieves NVD CVSS scores, severity, vectors, and scoring sources for cataloged CVEs.
+- Detects public PHP runtime indicators and extracts a PHP version when one is exposed.
+- Correlates reliable WordPress, plugin, theme, and PHP versions with catalogued affected ranges or branch-specific fixed releases.
+- Uses a data-driven PHP catalog and a generic `Get-PhpCveAssessment` evaluator rather than one hardcoded PHP routine per CVE.
+- Preserves per-CVE prerequisites for PHP-FPM, PHP-CGI, sessions, streams, PHAR, SOAP, DOM, XML, backtrace, and worker-state issues.
+- Performs safe, read-only behavioral, differential, and prerequisite checks where public validation is useful and non-destructive.
+- Downloads or reuses the current CISA KEV catalog and FIRST EPSS daily feed.
+- Retrieves NVD CVSS scores, severity, vectors, and scoring sources for catalogued CVEs.
 - Caches KEV, EPSS, and NVD evidence under `%LOCALAPPDATA%\WP-CVE-Validator\ThreatCache` for 24 hours by default.
-- Exports CVSS, KEV, EPSS, affected-version evidence, behavior evidence, and contextual dispositions to CSV and JSON.
-- Creates a threat-intelligence manifest containing source URLs, feed hashes, record counts, KEV metadata, and NVD attribution.
-- Distinguishes confirmed vulnerable behavior, exposed prerequisites, affected component versions, observed exposures, inconclusive results, and checks that are not applicable.
+- Exports CVSS, KEV, EPSS, affected-version evidence, behavior evidence, prerequisites, and contextual dispositions to CSV and JSON.
+- Creates a threat-intelligence manifest containing source URLs, timestamps, hashes, record counts, KEV metadata, and NVD attribution.
 - Identifies Cloudflare response-path indicators without assuming that Cloudflare completely protects or conceals the origin.
-- Performs evidence-based managed-hosting attribution using DNS, reverse DNS, and HTTP response headers.
-- Preserves separate IPv4 and IPv6 values in exported DNS evidence.
-- Deduplicates aggregate results by canonical application.
-- Runs catalog boundary tests and validates CSV/JSON export integrity before completing.
+- Performs evidence-based managed-hosting attribution using DNS, reverse DNS, nameservers, redirects, and HTTP response headers.
+- Deduplicates aggregate results by canonical application while preserving target-level evidence.
+- Generates PHP fixed-version boundary tests from catalog data and validates CSV/JSON export integrity before completing.
 
-##### Console presentation
+###### PHP catalog architecture
 
-The console uses color to separate operational failures from security conclusions:
+PHP vulnerabilities are defined by `Get-PhpVulnerabilityCatalog`. A typical entry includes:
 
-- Red `DOWN/UNREACHABLE` or failed HTTP status lines indicate request failures.
-- Yellow warnings indicate inconclusive status, affected-version evidence, or validation requirements.
-- Magenta `[EXPOSURE]` headings identify reproduced security-relevant behavior that does not prove the associated historical CVE applies. For example, public REST user enumeration on a site whose WordPress Core version is unknown is reported as an exposure without falsely attributing CVE-2017-5487.
-- A blinking red `[VULNERABLE]` threat line is reserved for **Confirmed Vulnerable Behavior**. In PowerShell 7, the tool requests ANSI blinking; terminals that do not support blinking receive a magenta fallback.
+```text
+CVE
+Title
+Component
+Severity
+FixedByBranch
+AppliesTo
+Prerequisites
+AuthoritativeChecks
+TemporaryMitigation
+Release
+```
 
-The detailed threat line includes current CVSS, KEV, EPSS probability, EPSS percentile, and threat-priority context. It is suppressed for fixed versions, unaffected versions, unknown versions, denied requests, authentication-required results, unreproduced behavior, and other inconclusive outcomes.
+The shared evaluator returns evidence-based outcomes such as:
 
-##### Safety boundaries
+- **Affected PHP Version - Update to `<fixed release>` or Later**
+- **PHP Version at or Above Fixed `<branch>` Release**
+- **Legacy PHP Branch - Backport or Migration Evidence Required**
+- **Not Applicable to Catalogued Affected PHP Branches**
+- **Potentially Exposed PHP Application - Runtime Version Not Publicly Confirmed**
+- **Inconclusive - PHP Runtime Not Publicly Confirmed**
 
-The validator does **not** perform authentication, account creation, SQL payload delivery, file uploads, file promotion, code execution, privilege escalation, core updates, race-condition exploitation, installer submission, database configuration, directory enumeration, or direct-to-origin testing.
+Version eligibility does not prove that a CVE's component and configuration prerequisites exist. The result evidence lists the required on-host, package, container, control-panel, or provider checks for each CVE.
 
-The CVE-2026-60137 differential check uses only safe, non-SQL malformed input. The October 28 WordPress Core assessment and CVE-2026-119977 reuse the same read-only `GET` and `HEAD` requests to `/wp-content/upgrade/`, `/wp-content/upgrade/index.php`, and a randomized nonexistent child path. The tool does not start an update, upload a package, race the updater, submit installer settings, or attempt to execute staged PHP.
+###### Vulnerability coverage
 
-For CVE-2026-114432, the validator performs passive Contact Form 7 discovery, version correlation, and public HTML review for a file-upload field. It does not submit the form, upload a validation file, probe temporary-file persistence, enumerate upload directories, retrieve active content, or attempt PHP/PHAR execution.
+Version 4.0.0 contains **32 unique CVE identifiers** across WordPress Core, WordPress plugins, and PHP runtime components, plus the separate `WP-CORE-2026-10-28` WordPress security-baseline assessment.
 
-##### Vulnerability coverage
-
-Version 3.7.2 contains **16 CVE checks** plus the separate WP-CORE-2026-10-28 security-baseline assessment.
-
-###### WordPress October 28, 2026 security baseline
-
+####### WordPress October 28, 2026 security baseline
 - **WP-CORE-2026-10-28:** Compares an observed WordPress Core version with the corresponding October 28, 2026 security backport for branches 4.7 through 7.1, including WordPress 7.1.4, 7.0.8, 6.9.11, and 6.8.12.
 - Sends differential read-only requests to `/wp-content/upgrade/`, `/wp-content/upgrade/index.php`, and a randomized nonexistent child path.
 - Records status codes, effective URLs, response sizes, body signatures, directory-listing markers, installer markers, and soft-404 similarity.
 - Reports an exposed prerequisite only when a credible upgrade-directory or installer signal differs from the randomized control and remains under the expected upgrade path.
 - Does not label the upgrade-window RCE as reproduced. A negative point-in-time check does not prove that the transient artifact would be unreachable during a real update.
 
-###### WordPress Core CVEs
-
-- **CVE-2017-5487:** Safely checks the WordPress REST users endpoint. Public user enumeration on WordPress 4.7.0 can be classified as confirmed vulnerable behavior. The same behavior on a newer version, or when Core version is unknown, is reported as an observed exposure without falsely attributing the historical CVE.
-- **CVE-2026-119977:** WordPress Core upgrade-window staged-installer RCE eligibility. Reuses the WP-CORE-2026-10-28 branch-version matrix and upgrade-path evidence instead of sending duplicate probes. The check distinguishes fixed releases, affected releases without an observed transient artifact, affected releases with a public staging prerequisite, and unknown-version results.
+####### WordPress Core CVEs
+- **CVE-2017-5487:** Safely checks the WordPress REST users endpoint. Public user enumeration on WordPress 4.7.0 can be classified as confirmed vulnerable behavior. The same behavior on a newer or unknown Core version is reported as an observed exposure without falsely attributing the historical CVE.
+- **CVE-2026-119977:** WordPress Core upgrade-window staged-installer RCE eligibility. Reuses the Core branch-version matrix and upgrade-path evidence instead of sending duplicate probes.
 - **CVE-2026-60137:** WordPress `WP_Query` SQL-injection eligibility involving `author__not_in`, assessed with a safe differential prerequisite probe rather than SQL payloads.
 - **CVE-2026-63030:** WordPress REST batch-route confusion.
 - **CVE-2026-65640:** Imagick/Ghostscript PostScript upload-RCE eligibility. The tool evaluates version evidence and public prerequisites but does not upload a file.
 - **CVE-2026-87902:** WordPress page-template path traversal/LFI with conditional RCE eligibility. The tool performs passive branch-version comparison only.
 
-###### WordPress plugin CVEs
-
+####### WordPress plugin CVEs
 - **CVE-2026-1492:** WPEverest User Registration privilege-escalation exposure through version 5.1.2.
 - **CVE-2026-19949:** All-in-One WP Migration affected-version correlation. The tool does not perform a migration, restore operation, or second-order SQL-injection workflow.
 - **CVE-2026-23550:** Modular DS / Modular Connector unauthenticated privilege-escalation exposure through version 2.5.1; version 2.5.2 is treated as the first fixed release.
 - **CVE-2026-78006:** The Events Calendar affected-version correlation.
 - **CVE-2026-83627:** Hummingbird Performance affected-version correlation.
 - **CVE-2026-85097:** Bricksforge unauthenticated arbitrary-file-upload/RCE exposure through version 3.1.8.9. The tool does not retrieve a nonce, upload a file, submit a form, promote a temporary file, or attempt execution.
-- **CVE-2026-8809:** Advanced Custom Fields: Extended privilege escalation through version 0.9.2.5. Exploitation requires a public frontend Create User form with a mapped role field; the tool does not submit forms, manipulate roles, or create accounts.
-- **CVE-2026-114432:** Contact Form 7 unauthenticated arbitrary-file-upload exposure in versions 6.2 through 6.2.3; version 6.2.4 is treated as the first fixed release. The tool can passively observe a public Contact Form 7 file field, but it does not submit a form or upload a file. Arbitrary file persistence is the primary issue; remote code execution additionally depends on server behavior such as discoverable uploads and executable handler mappings.
+- **CVE-2026-8809:** Advanced Custom Fields: Extended privilege escalation through version 0.9.2.5. The tool does not submit forms, manipulate roles, or create accounts.
+- **CVE-2026-114432:** Contact Form 7 unauthenticated arbitrary-file-upload exposure in versions 6.2 through 6.2.3; version 6.2.4 is treated as the first fixed release. The tool does not submit a form or upload a file.
 
-###### PHP Core CVEs
+####### PHP October 2026 security catalog
 
-- **CVE-2026-109618:** PHP unauthenticated remote-code-execution exposure involving out-of-memory corruption.
-- **CVE-2026-109619:** PHP unauthenticated remote-code-execution exposure involving stale request-owned global state.
+The October entries retain their original branch-specific fixed releases:
 
-PHP findings rely on publicly disclosed version evidence. Hidden versions remain inconclusive, and externally observed versions may require hosting-side confirmation because managed platforms and Linux distributions can apply backported fixes.
+```text
+PHP 8.2: 8.2.35
+PHP 8.3: 8.3.36
+PHP 8.4: 8.4.27
+PHP 8.5: 8.5.12
+```
 
-##### Evidence classifications
+- **CVE-2026-109618:** PHP core out-of-memory corruption and potential RCE.
+- **CVE-2026-109619:** PHP stale request-owned global state and potential RCE involving session or fatal-error state and worker reuse.
 
-- **Confirmed Vulnerable Behavior:** The central safe behavior was reproduced with sufficient applicability evidence. The console adds the blinking red threat banner.
+####### PHP November 2026 security catalog
+
+The common supported-branch security baseline is:
+
+```text
+PHP 8.2: 8.2.36 or later
+PHP 8.3: 8.3.37 or later
+PHP 8.4: 8.4.28 or later
+PHP 8.5: 8.5.13 or later
+```
+
+**Critical**
+- **CVE-2026-129289:** PHP-FPM request smuggling through reused FastCGI connections. Requires PHP-FPM and relevant FastCGI connection-reuse behavior.
+- **CVE-2026-115560:** Session serializer mismatch and unsafe deserialization. Requires session upload progress, incompatible serializers across shared session data, and potentially an application gadget chain.
+- **CVE-2026-126714:** Partial session-file overwrite race. Requires file-based sessions and relevant interrupted or concurrent writes.
+- **CVE-2026-129496:** Timezone-cache use-after-free involving diagnostics, warning paths, and reusable worker state.
+- **CVE-2026-129481:** Interrupted session-shutdown use-after-free requiring affected session cleanup and worker reuse.
+- **CVE-2026-129474:** PHP 8.5 magic-method backtrace use-after-free. The catalog limits the version check to PHP 8.5 and requires application and backtrace evidence.
+- **CVE-2026-129182:** PHP 8.5 fatal-error backtrace-state use-after-free. The catalog limits the version check to PHP 8.5.
+
+**High**
+- **CVE-2026-129291:** PHP-FPM epoll use-after-free.
+- **CVE-2026-127960:** Denial of service through folded HTTP response headers.
+- **CVE-2026-128064:** Mixed-case HTTPS or FTPS scheme downgrade in PHP stream handling.
+- **CVE-2026-128090:** PHAR OpenSSL signature algorithm downgrade.
+
+**Medium**
+- **CVE-2026-129538:** PHP-CGI `PATH_INFO` out-of-bounds access.
+- **CVE-2026-15353:** SOAP malformed array-dimension information disclosure.
+- **CVE-2026-129506:** SOAP/XML DTD entity-reference use-after-free.
+- **CVE-2026-129501:** PHP 8.4 DOM XML serialization double-free. The catalog limits the version check to PHP 8.4.
+- **CVE-2026-129292:** PHP-FPM status-page cross-site scripting.
+
+###### Console presentation
+
+The console uses color to separate operational failures from security conclusions:
+- Red `DOWN/UNREACHABLE` or failed HTTP status lines indicate request failures.
+- Yellow warnings indicate inconclusive status, affected-version evidence, exposed prerequisites, or authoritative validation requirements.
+- Magenta `[EXPOSURE]` headings identify reproduced security-relevant behavior that does not prove the associated historical CVE applies.
+- A blinking red `[VULNERABLE]` threat line is reserved for **Confirmed Vulnerable Behavior**. PowerShell 7 requests ANSI blinking; terminals that do not support blinking receive a magenta fallback.
+
+Detailed CVSS, KEV, EPSS probability, EPSS percentile, and threat-priority context is displayed for confirmed affected behavior. High CVSS, KEV status, or EPSS probability by itself does not cause the tool to declare an asset affected.
+
+###### Safety boundaries
+
+The validator does **not** perform authentication, account creation, SQL payload delivery, file uploads, file promotion, command execution, privilege escalation, WordPress updates, race-condition exploitation, FastCGI request smuggling, multipart session injection, serializer-mismatch exploitation, session-file corruption, memory-corruption triggering, SOAP/PHAR/DOM exploit delivery, CGI path manipulation, or direct-to-origin testing.
+
+The PHP checks use public runtime evidence and catalog correlation only. SAPI, extensions, session handlers, worker state, FastCGI reuse, status-page configuration, stream-wrapper usage, DTD handling, and vendor package backports require authoritative validation.
+
+###### Evidence classifications
+- **Confirmed Vulnerable Behavior:** The central safe behavior was reproduced with sufficient applicability evidence.
 - **Confirmed Exposed Prerequisite:** A material prerequisite was observed, but the complete exploit path was not reproduced.
-- **Affected Component Version:** Reliable Core, plugin, or PHP version evidence falls inside an affected range, while behavior or configuration prerequisites remain unverified. Version 3.7.2 uses a common classifier so affected Core, plugin, PHP, legacy PHP, generic component, and potentially affected version wording contributes consistently to target and aggregate dispositions.
-- **Observed Exposure:** Public behavior or metadata warrants review but does not prove the associated CVE. The console uses a prominent magenta/yellow exposure warning.
-- **Inconclusive:** Version, component presence, configuration, or response behavior could not be established reliably.
-- **Not detected / not applicable:** The component or required condition was not observed. This does not prove permanent absence.
+- **Affected Component Version:** Reliable WordPress, plugin, theme, or PHP version evidence falls inside an affected range while behavior or configuration prerequisites remain unverified.
+- **Affected PHP Version:** The exposed PHP version is below the first fixed release for its major/minor branch. This establishes upstream version eligibility only.
+- **Legacy PHP Branch - Backport or Migration Evidence Required:** The observed branch is outside the supported upstream branches represented in the catalog.
+- **Observed Exposure:** Public behavior or metadata warrants review but does not prove the associated CVE.
+- **Inconclusive:** Version, component presence, configuration, package status, or response behavior could not be established reliably.
+- **Not detected / not applicable:** The component, branch, or required condition was not observed. This does not prove permanent absence.
 
-Partial WordPress versions such as 7.1 should be treated as patch-level inconclusive unless another public source provides the complete version. WP-CLI, the WordPress administration interface, managed-hosting inventory, or filesystem evidence remain authoritative for final patch validation.
-
-##### Usage
+###### Usage
 
 Create a text file containing one hostname or URL per line:
 
@@ -1604,28 +1667,27 @@ Force fresh KEV and EPSS feeds:
 
 Set `NVD_API_KEY` when an NVD API key is available. Do not place API keys in scripts or repositories.
 
-##### Output
+###### Output
 
 The validator produces:
-
 - A detailed timestamped CSV evidence report.
 - A matching JSON evidence report.
-- `WP-CVE-Validator-Coverage-v3.7.2.csv`, describing each check, validation mode, coverage, and limitations.
-- `WP-CVE-Validator-Threat-Manifest-YYYYMMDD-HHMMSS.json`, recording threat-feed sources, hashes, record counts, and NVD usage.
+- `WP-CVE-Validator-Coverage-v4.0.0.csv`, generated from the WordPress and PHP catalogs and describing validation mode, coverage, and limitations.
+- `WP-CVE-Validator-Threat-Manifest-YYYYMMDD-HHMMSS.json`, recording feed sources, hashes, record counts, CVE identifiers, and NVD usage.
 - Console summaries for raw targets and deduplicated canonical applications.
-- CVSS, CISA KEV, FIRST EPSS, Core, plugin, theme, PHP, Cloudflare, hosting, DNS, and request evidence.
+- CVSS, CISA KEV, FIRST EPSS, WordPress Core, plugin, theme, PHP, Cloudflare, hosting, DNS, and request evidence.
 - Automatic CSV/JSON integrity and URL-ownership validation.
 
-##### Interpretation and limitations
-
-- Scanner fingerprints, public references, and version strings are evidence leads, not automatic proof of exploitability.
-- A successful Cloudflare-path response proves the tested public response traversed Cloudflare; it does not prove WAF enforcement, origin concealment, or prevention of direct-to-origin access.
-- Managed-hosting attribution does not replace authoritative patch verification.
-- The `/wp-content/upgrade/` condition is transient. A clean point-in-time response cannot prove that the vulnerable window never exists.
-- Plugin presence without a reliable version remains inconclusive.
-- Contact Form 7 RCE is conditional on server configuration; an affected plugin version alone is not proof of executable upload or RCE.
-- The tool does not replace authenticated configuration review, WP-CLI, source-code review, server inventory, log analysis, provider confirmation, or controlled nonproduction exploitation.
-
+###### Interpretation and limitations
+- Public scanner fingerprints, references, and version strings are evidence leads, not automatic proof of exploitability.
+- PHP version eligibility does not establish SAPI, extension, session, worker-state, FastCGI, SOAP, PHAR, DOM, CGI, or application prerequisites.
+- Linux distributions and hosting providers may backport security fixes without changing the exposed upstream PHP version. The installed package release and vendor advisory remain authoritative.
+- After patching PHP-FPM or another persistent PHP runtime, restart workers or redeploy the fixed container or image so that the effective process uses the corrected binary.
+- A successful Cloudflare-path response proves only that the tested public response traversed Cloudflare; it does not prove WAF enforcement, origin concealment, or prevention of direct-to-origin access.
+- Managed-hosting attribution does not replace authoritative package or runtime verification.
+- A clean point-in-time response cannot prove that a transient WordPress or PHP condition never exists.
+- Partial WordPress versions such as `7.1` remain patch-level inconclusive unless another source provides the complete version.
+- The tool does not replace authenticated configuration review, WP-CLI, server or container inventory, package-manager evidence, source-code review, logs, provider confirmation, or controlled nonproduction reproduction.
 #### SSH-CVE-Validator.ps1
 
 `SSH-CVE-Validator.ps1` is an evidence-first, read-only PowerShell tool for validating public SSH and OpenSSH exposure against a curated server-side CVE catalog. Version 1.2.4 combines direct SSH banner collection, Nmap protocol negotiation, IP-and-port endpoint deduplication, hosting attribution, and current NVD CVSS, CISA Known Exploited Vulnerabilities, and FIRST EPSS threat intelligence.
