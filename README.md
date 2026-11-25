@@ -15,6 +15,7 @@ Entries with documentation in this README jump to the corresponding section belo
     - [DisableWindowsDefender.ps1](#disablewindowsdefenderps1)
     - [kickoff.ps1](#kickoffps1)
     - [Invoke-CveRiskAssessment.ps1](#invoke-cveriskassessmentps1)
+    - [Invoke-PeeDeeEffPdfTriage-v1.5.1.ps1](#invoke-peedeffpdftriage-v151ps1)
     - [SetAdaptorMetricWired_Highest.ps1](#setadaptormetricwired_highestps1)
     - [crt_enum.ps1](#crt_enumps1)
     - [generic/Set-DynamicNrptDomainBlock.ps1](#set-dynamicnrptdomainblockps1)
@@ -925,6 +926,142 @@ whenChanged       : 1/19/2026 12:56:35 PM
 
 ## ── 📂 Section: Generic Directory ──
 ---
+### `Invoke-PeeDeeEffPdfTriage-v1.5.1.ps1`
+
+**Repository path:** `generic/Invoke-PeeDeeEffPdfTriage-v1.5.1.ps1`  
+**Current version:** 1.5.1  
+**Requires:** PowerShell 7 or later and `qpdf.exe` available in `PATH`
+
+PeeDeeEff is a local-only, evidence-oriented PDF triage utility. It inspects every file in an operator-supplied folder, distinguishes PDF content from non-PDF content, invokes qpdf for structural and object-aware analysis, validates selected active-content indicators, and exports timestamped CSV and JSON evidence. Document content is not uploaded or executed.
+
+The utility is designed for first-line intake review and analyst prioritization. A passing result means only that the selected checks did not detect a reportable indicator. PeeDeeEff does not replace antimalware scanning, EDR, sandbox detonation, content disarm and reconstruction, application-side content controls, or manual review.
+
+#### What the tool does
+
+- Calculates SHA-256 for every discovered file and identifies duplicate-hash groups.
+- Detects PDF content from the `%PDF-` signature rather than trusting the filename extension.
+- Records ordinary non-PDF inputs as `NOT A PDF` without invoking qpdf.
+- Rejects files that use a `.pdf` extension without a PDF content signature.
+- Continues to inspect PDF content stored under a non-PDF extension and records the mismatch.
+- Runs `qpdf --check` and classifies structural warnings separately from confirmed active content.
+- Uses qpdf JSON v2 with stream data omitted for object-aware action analysis.
+- Preserves qpdf JSON keys that differ only by case with PowerShell 7 `ConvertFrom-Json -AsHashtable`.
+- Records encryption revision, opening-password behavior, and exact qpdf permissions.
+- Treats permission-only encryption with an empty user password as informational.
+- Identifies JavaScript, Launch, SubmitForm, remote-document, URI, and named actions from PDF object dictionaries.
+- Separates recognized Adobe date-field validation JavaScript from unclassified or higher-risk JavaScript.
+- Extracts Launch action object references and target evidence when qpdf exposes the target.
+- Normalizes supported content with qpdf and requires a valid `MZ` to `e_lfanew` to `PE\0\0` relationship before reporting a Windows Portable Executable structure.
+- Displays verbose, color-coded progress and per-check results.
+- Exports timestamped CSV and JSON evidence under `PeeDeeEff-Results`.
+- Includes regression self-tests for case-distinct JSON keys, recognized Adobe JavaScript, Launch target extraction, and non-PDF handling.
+
+#### Dispositions
+
+- **PASS FIRST-LINE CHECKS:** Analysis completed and no selected reportable indicator was detected.
+- **REVIEW:** Low-priority structural or conformance evidence warrants review.
+- **MANUAL REVIEW:** Active content was confirmed but classified as known or context-dependent, such as recognized Adobe form-field JavaScript.
+- **QUARANTINE / MANUAL REVIEW:** Higher-risk or unresolved active content was identified, including Launch actions, unclassified JavaScript, selected high-risk JavaScript primitives, SubmitForm actions, a validated Windows PE structure, or a fatal qpdf result.
+- **ANALYSIS INCOMPLETE:** Required object-aware or normalization analysis did not complete. This is a coverage limitation, not proof of malicious content.
+- **NOT A PDF:** The input did not contain a PDF signature and was not named with a `.pdf` extension.
+- **REJECT:** The file used a `.pdf` extension but no PDF signature was found within the first 1024 bytes.
+- **ERROR:** The file could not be processed because of an operational error.
+
+#### Prerequisites
+
+- PowerShell 7 or later.
+- qpdf installed and resolvable through `Get-Command qpdf`.
+- Read access to the target files and write access to the output directory.
+- Sufficient temporary disk space for qpdf JSON and normalized-PDF artifacts.
+
+Verify the prerequisites:
+
+```powershell
+$PSVersionTable.PSVersion
+
+Get-Command qpdf |
+    Format-List Name, Source
+
+qpdf --version
+```
+
+Install qpdf with Windows Package Manager when required:
+
+```powershell
+winget install `
+    --id QPDF.QPDF `
+    --exact `
+    --accept-package-agreements `
+    --accept-source-agreements
+```
+
+Open a new PowerShell 7 session after installation and confirm that `qpdf --version` succeeds.
+
+#### Usage
+
+Run from the generic directory against a folder containing PDFs or mixed file types:
+
+```powershell
+Set-Location '.\generic'
+
+.\Invoke-PeeDeeEffPdfTriage-v1.5.1.ps1 `
+    -Path 'C:\Path\To\Document-Intake'
+```
+
+Run the built-in regression checks before processing the folder:
+
+```powershell
+.\Invoke-PeeDeeEffPdfTriage-v1.5.1.ps1 `
+    -Path 'C:\Path\To\Document-Intake' `
+    -RunSelfTest
+```
+
+Inspect subdirectories recursively:
+
+```powershell
+.\Invoke-PeeDeeEffPdfTriage-v1.5.1.ps1 `
+    -Path 'C:\Path\To\Document-Intake' `
+    -Recurse
+```
+
+Use a separate evidence directory and adjust evidence limits:
+
+```powershell
+.\Invoke-PeeDeeEffPdfTriage-v1.5.1.ps1 `
+    -Path 'C:\Path\To\Document-Intake' `
+    -OutputDirectory 'C:\SecurityEvidence\PeeDeeEff' `
+    -MaxReadMB 1024 `
+    -EvidenceLength 2000
+```
+
+Review the complete comment-based help:
+
+```powershell
+Get-Help .\Invoke-PeeDeeEffPdfTriage-v1.5.1.ps1 -Full
+```
+
+#### Output
+
+By default, the script creates `PeeDeeEff-Results` beneath the assessed folder and writes:
+
+- `PeeDeeEff-Results-YYYYMMDD-HHMMSS.csv`
+- `PeeDeeEff-Results-YYYYMMDD-HHMMSS.json`
+
+Evidence includes file identity and SHA-256, duplicate-group size, PDF signature and header offset, qpdf status and warnings, analysis completeness, encryption and permission details, JavaScript classifications, action objects and targets, normalized-content PE evidence, final disposition, findings, informational observations, and operational errors.
+
+#### Interpretation and limitations
+
+- A clean result is not proof that a document is safe or permanently free of malicious content.
+- qpdf warnings may indicate malformed, reconstructed, nonconforming, or unusually generated content without proving malicious intent.
+- Recognized Adobe form JavaScript remains active content. Confirm that the behavior is required or sanitize the document when interactive forms are unnecessary.
+- A Launch action remains a quarantine lead until the complete target and intended business requirement are understood.
+- URI and named actions are recorded for context and are not automatically treated as malicious.
+- Permission encryption with an empty opening password may restrict copying, modification, extraction, annotation, form filling, or signing while allowing normal viewing.
+- The PE check validates structural relationships in qpdf-normalized content. It does not execute or detonate a payload.
+- Password protection, unsupported PDF features, malformed objects, parser differences, or qpdf limitations may reduce coverage.
+- PeeDeeEff does not validate certificate trust, digital-signature chains, provenance, business correctness, accessibility, or whether the document is the current approved revision.
+- Keep antimalware scanning, EDR, content disarm and reconstruction, controlled publishing, SHA-256 verification, authorization, versioning, and audit logging in the document-intake pipeline.
+
 ### `kickoff.ps1`
 
 Configures common PowerShell prerequisites used by scripts in this repository. The script can install or update required modules and can set up PowerSploit when run from Windows PowerShell 5.1 after the PowerSploit repository has been cloned locally.
